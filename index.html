@@ -1,0 +1,2250 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nayan Retail Ltd | Accounting Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50:  'rgb(var(--b50) / <alpha-value>)',
+                            100: 'rgb(var(--b100) / <alpha-value>)',
+                            400: 'rgb(var(--b400) / <alpha-value>)',
+                            500: 'rgb(var(--b500) / <alpha-value>)',
+                            600: 'rgb(var(--b600) / <alpha-value>)',
+                            700: 'rgb(var(--b700) / <alpha-value>)',
+                            800: 'rgb(var(--b800) / <alpha-value>)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Three light colour themes. Switch with the palette button in the top bar. */
+        :root, [data-theme="mint"] {
+            --b50:240 253 250; --b100:204 251 241; --b400:45 212 191; --b500:20 184 166;
+            --b600:13 148 136; --b700:15 118 110; --b800:17 94 89;
+            --page: #f3f7f5; --accent:#f97316;
+        }
+        [data-theme="plum"] {
+            --b50:250 245 255; --b100:243 232 255; --b400:192 132 252; --b500:168 85 247;
+            --b600:147 51 234; --b700:126 34 206; --b800:107 33 168;
+            --page:#f8f5fb; --accent:#e11d48;
+        }
+        [data-theme="sun"] {
+            --b50:255 247 237; --b100:255 237 213; --b400:251 146 60; --b500:249 115 22;
+            --b600:234 88 12; --b700:194 65 12; --b800:154 52 18;
+            --page:#fbf8f3; --accent:#0f766e;
+        }
+        body { background: var(--page); color:#292524; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+        input, select, textarea { background:#fff !important; }
+        .nav-btn.active { background: rgb(var(--b100)); color: rgb(var(--b800)); box-shadow: inset 3px 0 0 rgb(var(--b600)); }
+        .nav-btn.active { font-weight: 700; }
+        .brand-bar { background: linear-gradient(90deg, rgb(var(--b600)), var(--accent)); height: 3px; }
+        .kpi-card { position: relative; overflow: hidden; }
+        .kpi-card::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background: var(--kpi, rgb(var(--b600))); }
+        #toast { position: fixed; bottom: 20px; right: 20px; z-index: 100; }
+        .toast-item { background:#1c1917; color:#fff; padding:10px 14px; border-radius:8px; font-size:12px; margin-top:8px; box-shadow:0 6px 20px rgba(0,0,0,.18); animation: tin .2s ease-out; }
+        @keyframes tin { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none; } }
+        @media (prefers-reduced-motion: reduce) { .toast-item { animation:none; } }
+        button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid rgb(var(--b600)); outline-offset: 2px; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .print-area { width: 100% !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased flex flex-col">
+<div class="brand-bar no-print shrink-0"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="no-print bg-white border-b border-stone-200 px-4 py-2.5 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-brand-600 p-2 rounded-lg shadow-sm">
+                <i data-lucide="store" class="w-5 h-5 text-stone-900"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-base tracking-tight text-stone-900 flex items-center gap-2">
+                    Nayan Retail Ltd <span class="text-[10px] bg-brand-100 text-brand-800 border border-brand-500/30 px-2 py-0.5 rounded font-mono">Books v1.0</span>
+                </h1>
+                <p class="text-xs text-stone-500">Retail accounting, GST and stock-linked ledgers</p>
+            </div>
+        </div>
+
+        <!-- Global Search & System Status -->
+        <div class="hidden md:flex items-center space-x-4">
+            <div class="relative w-64">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-stone-500"></i>
+                <input type="text" id="globalSearch" placeholder="Search invoice, party, voucher, account..." 
+                    class="w-full bg-stone-100/80 border border-stone-300/60 rounded-md pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:border-brand-500 text-stone-800">
+            </div>
+            <div class="flex items-center space-x-2 border-l border-stone-200 pl-4">
+                <span id="balancePill" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-400 "></span> <span id="balanceText">Books balanced</span>
+                </span>
+                <span class="text-xs text-stone-500 font-mono" id="currentFiscalYear">FY 2026-27</span>
+            </div>
+        </div>
+
+        <!-- User Controls -->
+        <div class="flex items-center space-x-3">
+            <button onclick="resetDemo()" class="p-2 text-stone-500 hover:text-stone-900 rounded-lg hover:bg-stone-100 transition" title="Reset to demo data" aria-label="Reset to demo data">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            </button>
+            <button onclick="toggleTheme()" class="px-2.5 py-1.5 text-xs font-medium text-stone-700 border border-stone-300 hover:bg-stone-100 rounded-lg transition flex items-center gap-1.5" title="Change colour theme" aria-label="Change colour theme">
+                <i data-lucide="palette" class="w-4 h-4"></i><span id="themeName" class="hidden sm:inline">Mint</span>
+            </button>
+            <div class="flex items-center space-x-2 border-l border-stone-200 pl-3">
+                <div class="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center font-bold text-xs border border-stone-300">
+                    NR
+                </div>
+                <div class="hidden sm:block text-left">
+                    <div class="text-xs font-semibold text-stone-800">Nayan (Owner)</div>
+                    <div class="text-[10px] text-stone-500">Head office ledger</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Body Grid -->
+    <div class="flex-1 flex overflow-hidden">
+
+        <!-- Sidebar Navigation -->
+        <aside class="no-print w-56 bg-white border-r border-stone-200 flex flex-col justify-between shrink-0">
+            <nav class="p-3 space-y-1 overflow-y-auto">
+                <div class="text-[10px] uppercase font-bold text-stone-500 px-3 pt-2 pb-1 tracking-wider">Main Modules</div>
+                
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Dashboard</span>
+                </button>
+                
+                <button onclick="switchTab('coa')" id="nav-coa" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100/60 transition">
+                    <i data-lucide="git-fork" class="w-4 h-4"></i>
+                    <span>Chart of Accounts</span>
+                </button>
+
+                <button onclick="switchTab('vouchers')" id="nav-vouchers" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100/60 transition">
+                    <i data-lucide="receipt" class="w-4 h-4"></i>
+                    <span>Voucher Posting</span>
+                </button>
+
+                <button onclick="switchTab('sales')" id="nav-sales" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100/60 transition">
+                    <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                    <span>Sales & Invoicing</span>
+                </button>
+
+                <button onclick="switchTab('purchases')" id="nav-purchases" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100/60 transition">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                    <span>Purchases & Vendors</span>
+                </button>
+
+                <div class="text-[10px] uppercase font-bold text-stone-500 px-3 pt-4 pb-1 tracking-wider">Financial Intelligence</div>
+
+                <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100/60 transition">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    <span>Financial Statements</span>
+                </button>
+
+                <button onclick="switchTab('ledger')" id="nav-ledger" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100/60 transition">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span>Ledger Explorer</span>
+                </button>
+
+                <button onclick="switchTab('audit')" id="nav-audit" class="nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100/60 transition">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Audit Trail</span>
+                </button>
+            </nav>
+
+            <!-- Quick Action Bar -->
+            <div class="p-3 border-t border-stone-200 bg-white/50">
+                <div class="text-[10px] uppercase font-bold text-stone-500 mb-2">Quick Voucher</div>
+                <div class="grid grid-cols-2 gap-1.5">
+                    <button onclick="openVoucherModal('Payment')" class="px-2 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/30 rounded text-[11px] font-medium transition flex items-center justify-center gap-1">
+                        <i data-lucide="arrow-up-right" class="w-3 h-3"></i> Payment
+                    </button>
+                    <button onclick="openVoucherModal('Receipt')" class="px-2 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 border border-emerald-500/30 rounded text-[11px] font-medium transition flex items-center justify-center gap-1">
+                        <i data-lucide="arrow-down-left" class="w-3 h-3"></i> Receipt
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-stone-50 print-area" id="mainContainer">
+
+            <!-- 1. DASHBOARD TAB -->
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Top Actions & Header -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-stone-200/80 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-stone-900 tracking-tight">Financial Overview</h2>
+                        <p class="text-xs text-stone-500">Live summary of sales, stock, GST and cash. It updates every time you post an entry.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openInvoiceModal()" class="px-3 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-lg shadow-brand-600/20 transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i> New Invoice
+                        </button>
+                        <button onclick="openVoucherModal('Journal')" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                            <i data-lucide="file-plus" class="w-4 h-4"></i> Post Voucher
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Metric Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                    <div class="kpi-card bg-white border border-stone-200 p-3.5 pl-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-start text-stone-500 mb-1">
+                            <span class="text-xs font-medium">Total Sales</span>
+                            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-700"></i>
+                        </div>
+                        <div class="text-lg font-bold text-stone-900" id="kpi-sales">₹0.00</div>
+                        <span class="text-[10px] text-emerald-700">Includes GST</span>
+                    </div>
+
+                    <div class="kpi-card bg-white border border-stone-200 p-3.5 pl-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-start text-stone-500 mb-1">
+                            <span class="text-xs font-medium">Purchases</span>
+                            <i data-lucide="shopping-bag" class="w-4 h-4 text-sky-700"></i>
+                        </div>
+                        <div class="text-lg font-bold text-stone-900" id="kpi-purchases">₹0.00</div>
+                        <span class="text-[10px] text-stone-500">Cost of goods sold (stock bought)</span>
+                    </div>
+
+                    <div class="kpi-card bg-white border border-stone-200 p-3.5 pl-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-start text-stone-500 mb-1">
+                            <span class="text-xs font-medium">Receivables</span>
+                            <i data-lucide="arrow-down-left" class="w-4 h-4 text-amber-700"></i>
+                        </div>
+                        <div class="text-lg font-bold text-amber-700" id="kpi-receivables">₹0.00</div>
+                        <span class="text-[10px] text-stone-500">Sundry Debtors</span>
+                    </div>
+
+                    <div class="kpi-card bg-white border border-stone-200 p-3.5 pl-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-start text-stone-500 mb-1">
+                            <span class="text-xs font-medium">Payables</span>
+                            <i data-lucide="arrow-up-right" class="w-4 h-4 text-rose-600"></i>
+                        </div>
+                        <div class="text-lg font-bold text-rose-600" id="kpi-payables">₹0.00</div>
+                        <span class="text-[10px] text-stone-500">Sundry Creditors</span>
+                    </div>
+
+                    <div class="kpi-card bg-white border border-stone-200 p-3.5 pl-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-start text-stone-500 mb-1">
+                            <span class="text-xs font-medium">Cash + bank</span>
+                            <i data-lucide="wallet" class="w-4 h-4 text-brand-700"></i>
+                        </div>
+                        <div class="text-lg font-bold text-stone-900" id="kpi-cash">₹0.00</div>
+                        <span class="text-[10px] text-stone-500">Bank + Cash Account</span>
+                    </div>
+
+                    <div class="kpi-card bg-white border border-stone-200 p-3.5 pl-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-start text-stone-500 mb-1">
+                            <span class="text-xs font-medium">Net profit</span>
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-700"></i>
+                        </div>
+                        <div class="text-lg font-bold text-emerald-700" id="kpi-netprofit">₹0.00</div>
+                        <span class="text-[10px] text-emerald-700/80" id="kpi-margin-pct">0% Net profit</span>
+                    </div>
+                </div>
+
+                
+                <!-- Business health ratios + GST position -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="lg:col-span-2 bg-white border border-stone-200 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-semibold text-stone-800 flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4 text-brand-700"></i> Business health check</h3>
+                            <span class="text-xs text-stone-500">Calculated from your ledgers</span>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="ratioGrid"></div>
+                    </div>
+                    <div class="bg-white border border-stone-200 rounded-xl p-4">
+                        <h3 class="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2"><i data-lucide="landmark" class="w-4 h-4 text-brand-700"></i> GST position</h3>
+                        <div class="space-y-2 text-xs" id="gstBox"></div>
+                    </div>
+                </div>
+
+                <!-- Interactive Financial Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="lg:col-span-2 bg-white border border-stone-200 rounded-xl p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-semibold text-stone-800">Sales vs expenses by month and profit trend</h3>
+                            <span class="text-xs text-stone-500">FY 2026-27</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="chartRevenueExpenses"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-stone-200 rounded-xl p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-semibold text-stone-800">Where our assets sit</h3>
+                            <span class="text-xs text-stone-500">Share of total assets</span>
+                        </div>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartAssetStructure"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions Ledger Feed & Quick Receivables Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="lg:col-span-2 bg-white border border-stone-200 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-semibold text-stone-800 flex items-center gap-2">
+                                <i data-lucide="history" class="w-4 h-4 text-brand-700"></i> Recent Journal Entries
+                            </h3>
+                            <button onclick="switchTab('vouchers')" class="text-xs text-brand-700 hover:underline">View All Vouchers</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="text-stone-500 border-b border-stone-200 font-mono">
+                                        <th class="py-2 px-3">VOUCHER #</th>
+                                        <th class="py-2 px-3">DATE</th>
+                                        <th class="py-2 px-3">TYPE</th>
+                                        <th class="py-2 px-3">NARRATION</th>
+                                        <th class="py-2 px-3 text-right">AMOUNT</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardRecentVouchers" class="divide-y divide-stone-200/60 text-stone-700">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-stone-200 rounded-xl p-4">
+                        <h3 class="text-sm font-semibold text-stone-800 mb-3 flex items-center gap-2">
+                            <i data-lucide="clock" class="w-4 h-4 text-amber-700"></i> Pending Receivables
+                        </h3>
+                        <div class="space-y-2.5 max-h-[260px] overflow-y-auto pr-1" id="dashboardPendingReceivables">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. CHART OF ACCOUNTS (CoA) TAB -->
+            <section id="tab-coa" class="tab-content hidden space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-stone-200 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-stone-900">Chart of Accounts (GL)</h2>
+                        <p class="text-xs text-stone-500">General ledger accounts grouped as Assets, Liabilities, Equity, Income and Expenses.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="coaSearch" onkeyup="filterCoA()" placeholder="Search accounts..." 
+                            class="bg-white border border-stone-200 rounded-lg px-3 py-1.5 text-xs text-stone-800 focus:outline-none focus:border-brand-500">
+                        <button onclick="openAddAccountModal()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-medium flex items-center gap-1 transition">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Account
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CoA Tabs by Category -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div class="bg-white border border-stone-200/80 p-3 rounded-lg text-center cursor-pointer hover:border-stone-300" onclick="filterCoACategory('ALL')">
+                        <div class="text-xs text-stone-500">All Accounts</div>
+                        <div class="text-lg font-bold text-stone-900" id="coa-count-all">0</div>
+                    </div>
+                    <div class="bg-white border border-emerald-500/20 p-3 rounded-lg text-center cursor-pointer hover:bg-white/80" onclick="filterCoACategory('Asset')">
+                        <div class="text-xs text-emerald-700 font-medium">Assets</div>
+                        <div class="text-lg font-bold text-emerald-700" id="coa-count-assets">0</div>
+                    </div>
+                    <div class="bg-white border border-rose-500/20 p-3 rounded-lg text-center cursor-pointer hover:bg-white/80" onclick="filterCoACategory('Liability')">
+                        <div class="text-xs text-rose-600 font-medium">Liabilities</div>
+                        <div class="text-lg font-bold text-rose-600" id="coa-count-liabilities">0</div>
+                    </div>
+                    <div class="bg-white border border-indigo-500/20 p-3 rounded-lg text-center cursor-pointer hover:bg-white/80" onclick="filterCoACategory('Equity')">
+                        <div class="text-xs text-indigo-700 font-medium">Equity</div>
+                        <div class="text-lg font-bold text-indigo-700" id="coa-count-equity">0</div>
+                    </div>
+                    <div class="bg-white border border-amber-500/20 p-3 rounded-lg text-center cursor-pointer hover:bg-white/80" onclick="filterCoACategory('Income')">
+                        <div class="text-xs text-amber-700 font-medium">Income & Expense</div>
+                        <div class="text-lg font-bold text-amber-700" id="coa-count-pnl">0</div>
+                    </div>
+                </div>
+
+                <!-- Chart of Accounts Master Table -->
+                <div class="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-stone-100/70 text-stone-700 font-mono">
+                            <tr>
+                                <th class="p-3">CODE</th>
+                                <th class="p-3">ACCOUNT NAME</th>
+                                <th class="p-3">TYPE</th>
+                                <th class="p-3">SUB-CATEGORY</th>
+                                <th class="p-3 text-right">CURRENT BALANCE</th>
+                                <th class="p-3 text-center">ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coaTableBody" class="divide-y divide-stone-200/80 text-stone-700">
+                            <!-- Dynamic rendering -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. VOUCHER ENTRY TAB (DOUBLE ENTRY GL) -->
+            <section id="tab-vouchers" class="tab-content hidden space-y-4">
+                <div class="flex justify-between items-center border-b border-stone-200 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-stone-900">Voucher Posting & General Ledger Engine</h2>
+                        <p class="text-xs text-stone-500">Strict double-entry accounting system with mandatory real-time Debit/Credit balance validation.</p>
+                    </div>
+                    <button onclick="openVoucherModal('Journal')" class="px-3 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                        <i data-lucide="plus" class="w-4 h-4"></i> New Double-Entry Voucher
+                    </button>
+                </div>
+
+                <div class="bg-white border border-stone-200 rounded-xl p-4 shadow-sm">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
+                        <h3 class="text-sm font-semibold text-stone-800">Audit Journal Voucher Register</h3>
+                        <div class="flex items-center space-x-2">
+                            <select id="voucherFilterType" onchange="renderVoucherRegister()" class="bg-stone-100 border border-stone-300 rounded-lg px-2.5 py-1 text-xs text-stone-800 focus:outline-none">
+                                <option value="ALL">All Voucher Types</option>
+                                <option value="Payment">Payment Voucher</option>
+                                <option value="Receipt">Receipt Voucher</option>
+                                <option value="Sales">Sales Voucher</option>
+                                <option value="Purchase">Purchase Voucher</option>
+                                <option value="Journal">General Journal</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-stone-100/80 text-stone-700 font-mono">
+                                <tr>
+                                    <th class="p-3">VOUCHER #</th>
+                                    <th class="p-3">DATE</th>
+                                    <th class="p-3">TYPE</th>
+                                    <th class="p-3">ACCOUNTS INVOLVED</th>
+                                    <th class="p-3">NARRATION</th>
+                                    <th class="p-3 text-right">TOTAL DEBIT</th>
+                                    <th class="p-3 text-right">TOTAL CREDIT</th>
+                                    <th class="p-3 text-center">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="voucherRegisterBody" class="divide-y divide-stone-200/70 text-stone-700">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. SALES & INVOICING TAB -->
+            <section id="tab-sales" class="tab-content hidden space-y-4">
+                <div class="flex justify-between items-center border-b border-stone-200 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-stone-900">Sales & Customer Invoicing</h2>
+                        <p class="text-xs text-stone-500">Generate tax invoices with automated GST breakdown (CGST/SGST/IGST) and ledger posting.</p>
+                    </div>
+                    <button onclick="openInvoiceModal()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                        <i data-lucide="file-plus" class="w-4 h-4"></i> Create Invoice
+                    </button>
+                </div>
+
+                <!-- Sales Invoices Table -->
+                <div class="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-stone-100/80 text-stone-700 font-mono">
+                            <tr>
+                                <th class="p-3">INVOICE #</th>
+                                <th class="p-3">DATE</th>
+                                <th class="p-3">CUSTOMER / PARTY</th>
+                                <th class="p-3">TAX TYPE</th>
+                                <th class="p-3 text-right">SUBTOTAL</th>
+                                <th class="p-3 text-right">TAX (GST)</th>
+                                <th class="p-3 text-right">TOTAL AMOUNT</th>
+                                <th class="p-3 text-center">STATUS</th>
+                                <th class="p-3 text-center">ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesInvoicesTableBody" class="divide-y divide-stone-200/70 text-stone-700">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 5. PURCHASES & VENDORS TAB -->
+            <section id="tab-purchases" class="tab-content hidden space-y-4">
+                <div class="flex justify-between items-center border-b border-stone-200 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-stone-900">Purchases & Vendor Bills</h2>
+                        <p class="text-xs text-stone-500">Manage supplier accounts payable, incoming inventory bills, and input tax credits.</p>
+                    </div>
+                    <button onclick="openPurchaseModal()" class="px-3 py-2 bg-sky-600 hover:bg-sky-500 text-stone-900 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                        <i data-lucide="plus-square" class="w-4 h-4"></i> Record Vendor Bill
+                    </button>
+                </div>
+
+                <div class="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-stone-100/80 text-stone-700 font-mono">
+                            <tr>
+                                <th class="p-3">BILL #</th>
+                                <th class="p-3">DATE</th>
+                                <th class="p-3">VENDOR NAME</th>
+                                <th class="p-3">EXPENSE CATEGORY</th>
+                                <th class="p-3 text-right">SUBTOTAL</th>
+                                <th class="p-3 text-right">INPUT TAX</th>
+                                <th class="p-3 text-right">NET PAYABLE</th>
+                                <th class="p-3 text-center">STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchaseBillsTableBody" class="divide-y divide-stone-200/70 text-stone-700">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 6. FINANCIAL STATEMENTS & REPORTS TAB -->
+            <section id="tab-reports" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center border-b border-stone-200 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-stone-900">Financial Statements & Audit Reports</h2>
+                        <p class="text-xs text-stone-500">Automated, real-time generated Trial Balance, Profit & Loss Account, and Balance Sheet.</p>
+                    </div>
+                    <button onclick="window.print()" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-800 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Print Financial Statement
+                    </button>
+                </div>
+
+                <!-- Sub-report Selector Tabs -->
+                <div class="flex space-x-2 border-b border-stone-200">
+                    <button onclick="switchReportSubTab('tb')" id="subtab-btn-tb" class="px-4 py-2 text-xs font-semibold text-brand-700 border-b-2 border-brand-500">Trial Balance</button>
+                    <button onclick="switchReportSubTab('pnl')" id="subtab-btn-pnl" class="px-4 py-2 text-xs font-semibold text-stone-500 hover:text-stone-800">Profit & Loss Account</button>
+                    <button onclick="switchReportSubTab('bs')" id="subtab-btn-bs" class="px-4 py-2 text-xs font-semibold text-stone-500 hover:text-stone-800">Balance Sheet</button>
+                </div>
+
+                <!-- SUB REPORT 1: TRIAL BALANCE -->
+                <div id="report-sub-tb" class="space-y-4">
+                    <div class="bg-white border border-stone-200 rounded-xl p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-sm font-bold text-stone-800 font-mono">TRIAL BALANCE - AS OF TODAY</h3>
+                            <span id="tbVerificationBadge" class="text-xs px-2 py-0.5 rounded font-mono">Checking...</span>
+                        </div>
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-stone-100/80 text-stone-700 font-mono">
+                                <tr>
+                                    <th class="p-2.5">ACCOUNT CODE</th>
+                                    <th class="p-2.5">ACCOUNT NAME</th>
+                                    <th class="p-2.5">CATEGORY</th>
+                                    <th class="p-2.5 text-right">DEBIT (₹)</th>
+                                    <th class="p-2.5 text-right">CREDIT (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trialBalanceBody" class="divide-y divide-stone-200 text-stone-700">
+                                <!-- Dynamic -->
+                            </tbody>
+                            <tfoot class="bg-stone-100/90 font-bold text-stone-900 border-t-2 border-stone-300">
+                                <tr>
+                                    <td colspan="3" class="p-3 text-right">TOTAL TRIAL BALANCE:</td>
+                                    <td class="p-3 text-right font-mono text-emerald-700" id="tbTotalDebit">₹0.00</td>
+                                    <td class="p-3 text-right font-mono text-emerald-700" id="tbTotalCredit">₹0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SUB REPORT 2: PROFIT & LOSS -->
+                <div id="report-sub-pnl" class="hidden space-y-4">
+                    <div class="bg-white border border-stone-200 rounded-xl p-5 max-w-4xl mx-auto space-y-4">
+                        <div class="text-center border-b border-stone-200 pb-3">
+                            <h3 class="text-base font-bold text-stone-900">STATEMENT OF PROFIT AND LOSS</h3>
+                            <p class="text-xs text-stone-500 font-mono">For the period ended FY 2026</p>
+                        </div>
+
+                        <!-- Income Section -->
+                        <div>
+                            <h4 class="text-xs font-bold text-brand-700 uppercase tracking-wider mb-2 border-b border-stone-200 pb-1">1. Operating Revenue</h4>
+                            <div id="pnlRevenueRows" class="space-y-1.5 text-xs text-stone-700 pl-3">
+                                <!-- Dynamic -->
+                            </div>
+                            <div class="flex justify-between font-bold text-xs text-stone-800 mt-2 pt-1 border-t border-stone-200">
+                                <span>TOTAL GROSS REVENUE (A)</span>
+                                <span id="pnlTotalRevenue" class="font-mono text-emerald-700">₹0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Cost of Sales & Expense Section -->
+                        <div>
+                            <h4 class="text-xs font-bold text-rose-600 uppercase tracking-wider mb-2 border-b border-stone-200 pb-1">2. Operating Expenses & Costs</h4>
+                            <div id="pnlExpenseRows" class="space-y-1.5 text-xs text-stone-700 pl-3">
+                                <!-- Dynamic -->
+                            </div>
+                            <div class="flex justify-between font-bold text-xs text-stone-800 mt-2 pt-1 border-t border-stone-200">
+                                <span>TOTAL OPERATING EXPENSES (B)</span>
+                                <span id="pnlTotalExpenses" class="font-mono text-rose-600">₹0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Net Profit Calculation -->
+                        <div class="bg-stone-100/80 p-3 rounded-lg flex justify-between items-center font-bold text-sm text-stone-900 border border-stone-300">
+                            <span>NET PROFIT / (LOSS) BEFORE TAX (A - B)</span>
+                            <span id="pnlNetProfit" class="font-mono text-emerald-700 text-base">₹0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB REPORT 3: BALANCE SHEET -->
+                <div id="report-sub-bs" class="hidden space-y-4">
+                    <div class="bg-white border border-stone-200 rounded-xl p-5 max-w-5xl mx-auto">
+                        <div class="text-center border-b border-stone-200 pb-3 mb-4">
+                            <h3 class="text-base font-bold text-stone-900">CONSOLIDATED STATEMENT OF FINANCIAL POSITION</h3>
+                            <p class="text-xs text-stone-500 font-mono">ASSETS = LIABILITIES + OWNER'S EQUITY</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Left: Assets -->
+                            <div class="space-y-3 bg-stone-50/40 p-4 rounded-xl border border-stone-200/80">
+                                <h4 class="text-xs font-bold text-emerald-700 uppercase tracking-wider border-b border-emerald-500/30 pb-1">ASSETS</h4>
+                                <div id="bsAssetsRows" class="space-y-2 text-xs text-stone-700">
+                                    <!-- Dynamic -->
+                                </div>
+                                <div class="flex justify-between font-bold text-xs text-emerald-700 pt-3 border-t border-stone-300">
+                                    <span>TOTAL ASSETS</span>
+                                    <span id="bsTotalAssets" class="font-mono text-sm">₹0.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Right: Liabilities & Equity -->
+                            <div class="space-y-3 bg-stone-50/40 p-4 rounded-xl border border-stone-200/80">
+                                <h4 class="text-xs font-bold text-rose-600 uppercase tracking-wider border-b border-rose-500/30 pb-1">LIABILITIES & EQUITY</h4>
+                                <div id="bsLiabilitiesRows" class="space-y-2 text-xs text-stone-700">
+                                    <!-- Dynamic -->
+                                </div>
+                                <div class="pt-2 border-t border-stone-200">
+                                    <div class="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-2">Equity & Retained Earnings</div>
+                                    <div id="bsEquityRows" class="space-y-2 text-xs text-stone-700">
+                                        <!-- Dynamic -->
+                                    </div>
+                                </div>
+                                <div class="flex justify-between font-bold text-xs text-indigo-700 pt-3 border-t border-stone-300">
+                                    <span>TOTAL LIABILITIES & EQUITY</span>
+                                    <span id="bsTotalLiabilitiesEquity" class="font-mono text-sm">₹0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Verification Check Bar -->
+                        <div id="bsEquivalenceCheck" class="mt-4 p-2.5 text-center text-xs font-mono rounded-lg border">
+                            <!-- Dynamic check -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. CUSTOMER & SUPPLIER LEDGER EXPLORER TAB -->
+            <section id="tab-ledger" class="tab-content hidden space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-stone-200 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-stone-900">Account Ledger Explorer</h2>
+                        <p class="text-xs text-stone-500">Deep-dive transaction history with running balances for individual ledger accounts.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs text-stone-500">Select Account:</label>
+                        <select id="ledgerAccountSelect" onchange="renderAccountLedger()" class="bg-white border border-stone-200 text-xs text-stone-800 rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-500">
+                            <!-- Dynamic list of accounts -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-stone-200 rounded-xl p-4 shadow-sm">
+                    <div class="flex justify-between items-center mb-3 border-b border-stone-200 pb-2">
+                        <div>
+                            <span class="text-xs text-stone-500">Statement for Account: </span>
+                            <span class="text-sm font-bold text-stone-900" id="ledgerAccountTitle">Select an account</span>
+                        </div>
+                        <div class="text-xs font-mono text-stone-700">
+                            Closing Balance: <span id="ledgerClosingBalance" class="font-bold text-emerald-700">₹0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-stone-100/80 text-stone-700 font-mono">
+                                <tr>
+                                    <th class="p-2.5">DATE</th>
+                                    <th class="p-2.5">VOUCHER #</th>
+                                    <th class="p-2.5">TYPE</th>
+                                    <th class="p-2.5">NARRATION / PARTICULARS</th>
+                                    <th class="p-2.5 text-right">DEBIT (₹)</th>
+                                    <th class="p-2.5 text-right">CREDIT (₹)</th>
+                                    <th class="p-2.5 text-right">RUNNING BALANCE (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgerStatementBody" class="divide-y divide-stone-200/70 text-stone-700">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. AUDIT TRAIL TAB -->
+            <section id="tab-audit" class="tab-content hidden space-y-4">
+                <div class="flex justify-between items-center border-b border-stone-200 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-stone-900">System Audit Log & Security</h2>
+                        <p class="text-xs text-stone-500">Immutable ledger log tracking user actions, postings, and double-entry system changes.</p>
+                    </div>
+                    <span class="text-xs bg-stone-100 text-stone-700 px-2.5 py-1 rounded-md font-mono border border-stone-300">
+                        Total Audit Logs: <span id="auditCount" class="font-bold text-brand-700">0</span>
+                    </span>
+                </div>
+
+                <div class="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-stone-100/80 text-stone-700 font-mono">
+                            <tr>
+                                <th class="p-3">TIMESTAMP</th>
+                                <th class="p-3">USER</th>
+                                <th class="p-3">ACTION CATEGORY</th>
+                                <th class="p-3">LOG DESCRIPTION</th>
+                                <th class="p-3 text-right">VALUE IMPACT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTrailBody" class="divide-y divide-stone-200/70 text-stone-700">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL: ADD ACCOUNT (CoA) -->
+    <div id="addAccountModal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white border border-stone-200 rounded-xl w-full max-w-md p-5 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-stone-200 pb-3">
+                <h3 class="text-sm font-bold text-stone-900">Add General Ledger Account</h3>
+                <button onclick="closeModal('addAccountModal')" class="text-stone-500 hover:text-stone-900"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form id="addAccountForm" onsubmit="handleAddAccount(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-stone-500 mb-1">Account Category</label>
+                    <select id="newAccType" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                        <option value="Asset">Asset</option>
+                        <option value="Liability">Liability</option>
+                        <option value="Equity">Equity</option>
+                        <option value="Income">Income / Sales</option>
+                        <option value="Expense">Expense / Cost</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-stone-500 mb-1">Account Name</label>
+                    <input type="text" id="newAccName" placeholder="e.g. Office Stationery Expense" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                </div>
+                <div>
+                    <label class="block text-stone-500 mb-1">Sub Category / Class</label>
+                    <input type="text" id="newAccSubCat" placeholder="e.g. Operating Expenses" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                </div>
+                <div>
+                    <label class="block text-stone-500 mb-1">Initial Opening Balance ($)</label>
+                    <input type="number" step="0.01" id="newAccBalance" value="0.00" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                </div>
+                <div class="flex justify-end space-x-2 pt-3 border-t border-stone-200">
+                    <button type="button" onclick="closeModal('addAccountModal')" class="px-3 py-1.5 bg-stone-100 text-stone-700 rounded hover:bg-stone-200">Cancel</button>
+                    <button type="submit" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white font-medium rounded">Save Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: POST DOUBLE-ENTRY VOUCHER -->
+    <div id="voucherModal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white border border-stone-200 rounded-xl w-full max-w-3xl p-5 shadow-xl space-y-4 my-8">
+            <div class="flex justify-between items-center border-b border-stone-200 pb-3">
+                <h3 class="text-sm font-bold text-stone-900 flex items-center gap-2">
+                    <i data-lucide="calculator" class="w-4 h-4 text-brand-700"></i>
+                    Post Double-Entry General Ledger Voucher
+                </h3>
+                <button onclick="closeModal('voucherModal')" class="text-stone-500 hover:text-stone-900"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <form id="voucherForm" onsubmit="handlePostVoucher(event)" class="space-y-4 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-stone-500 mb-1">Voucher Type</label>
+                        <select id="vType" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800">
+                            <option value="Journal">Journal Voucher (JV)</option>
+                            <option value="Payment">Payment Voucher</option>
+                            <option value="Receipt">Receipt Voucher</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-stone-500 mb-1">Transaction Date</label>
+                        <input type="date" id="vDate" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                    </div>
+                    <div>
+                        <label class="block text-stone-500 mb-1">Reference Number</label>
+                        <input type="text" id="vRef" placeholder="e.g. REF-9082" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800">
+                    </div>
+                </div>
+
+                <!-- Dynamic Line Items (Debits & Credits) -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-stone-700 font-semibold">Voucher Lines (Debit / Credit Split)</label>
+                        <button type="button" onclick="addVoucherRow()" class="px-2 py-1 bg-stone-100 hover:bg-stone-200 text-brand-700 border border-stone-300 rounded text-[11px] flex items-center gap-1">
+                            <i data-lucide="plus" class="w-3 h-3"></i> Add Row
+                        </button>
+                    </div>
+
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-stone-100/60 text-stone-500 font-mono">
+                            <tr>
+                                <th class="p-2">ACCOUNT NAME</th>
+                                <th class="p-2 w-28 text-right">DEBIT (₹)</th>
+                                <th class="p-2 w-28 text-right">CREDIT (₹)</th>
+                                <th class="p-2 w-8"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="voucherRowsBody" class="divide-y divide-stone-200/80">
+                            <!-- Rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Live Balancing Verification Banner -->
+                <div id="voucherBalanceBar" class="p-3 rounded-lg bg-stone-100/80 border border-stone-300 flex flex-col sm:flex-row justify-between items-center gap-2 font-mono">
+                    <div class="flex space-x-4 text-xs">
+                        <span>Total Debit: <b id="lblTotalDebit" class="text-stone-900">₹0.00</b></span>
+                        <span>Total Credit: <b id="lblTotalCredit" class="text-stone-900">₹0.00</b></span>
+                    </div>
+                    <div id="lblBalanceDiff" class="text-xs font-bold text-rose-600">
+                        Out of balance: ₹0.00
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-stone-500 mb-1">Narration / Internal Note</label>
+                    <input type="text" id="vNarration" placeholder="Explain business reason for entry..." class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-3 border-t border-stone-200">
+                    <button type="button" onclick="closeModal('voucherModal')" class="px-4 py-2 bg-stone-100 text-stone-700 rounded hover:bg-stone-200">Cancel</button>
+                    <button type="submit" id="btnPostVoucher" disabled class="px-4 py-2 bg-brand-600 disabled:opacity-40 hover:bg-brand-500 text-white font-medium rounded transition">
+                        Post Journal Voucher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CREATE SALES INVOICE -->
+    <div id="invoiceModal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white border border-stone-200 rounded-xl w-full max-w-3xl p-5 shadow-xl space-y-4 my-8">
+            <div class="flex justify-between items-center border-b border-stone-200 pb-3">
+                <h3 class="text-sm font-bold text-stone-900 flex items-center gap-2">
+                    <i data-lucide="file-plus" class="w-4 h-4 text-emerald-700"></i>
+                    Create Sales Tax Invoice
+                </h3>
+                <button onclick="closeModal('invoiceModal')" class="text-stone-500 hover:text-stone-900"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <form id="invoiceForm" onsubmit="handleCreateInvoice(event)" class="space-y-4 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-stone-500 mb-1">Customer Account</label>
+                        <select id="invCustomer" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                            <!-- Dynamic -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-stone-500 mb-1">Invoice Date</label>
+                        <input type="date" id="invDate" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                    </div>
+                    <div>
+                        <label class="block text-stone-500 mb-1">Tax Calculation Type</label>
+                        <select id="invTaxType" onchange="recalcInvoiceTotals()" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800">
+                            <option value="INTRA">Intra-State (CGST 9% + SGST 9%)</option>
+                            <option value="INTER">Inter-State (IGST 18%)</option>
+                            <option value="EXEMPT">Exempt / Zero Tax</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Invoice Line Items -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-stone-700 font-semibold">Item Details & Services</label>
+                        <button type="button" onclick="addInvoiceItemRow()" class="px-2 py-1 bg-stone-100 hover:bg-stone-200 text-emerald-700 border border-stone-300 rounded text-[11px] flex items-center gap-1">
+                            <i data-lucide="plus" class="w-3 h-3"></i> Add Line
+                        </button>
+                    </div>
+
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-stone-100/60 text-stone-500 font-mono">
+                            <tr>
+                                <th class="p-2">DESCRIPTION</th>
+                                <th class="p-2 w-20 text-center">QTY</th>
+                                <th class="p-2 w-24 text-right">RATE ($)</th>
+                                <th class="p-2 w-28 text-right">AMOUNT ($)</th>
+                                <th class="p-2 w-8"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceItemsBody" class="divide-y divide-stone-200/80">
+                            <!-- JS Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Invoice Totals Breakdown -->
+                <div class="bg-stone-100/60 p-3 rounded-lg space-y-1.5 font-mono text-xs max-w-xs ml-auto border border-stone-300">
+                    <div class="flex justify-between text-stone-500">
+                        <span>Subtotal:</span>
+                        <span id="invSubtotal" class="text-stone-800">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between text-stone-500" id="rowCgst">
+                        <span>CGST (9%):</span>
+                        <span id="invCgst" class="text-stone-800">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between text-stone-500" id="rowSgst">
+                        <span>SGST (9%):</span>
+                        <span id="invSgst" class="text-stone-800">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between text-stone-500 hidden" id="rowIgst">
+                        <span>IGST (18%):</span>
+                        <span id="invIgst" class="text-stone-800">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-stone-900 pt-1 border-t border-stone-300 text-sm">
+                        <span>Grand Total:</span>
+                        <span id="invGrandTotal" class="text-emerald-700">₹0.00</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-3 border-t border-stone-200">
+                    <button type="button" onclick="closeModal('invoiceModal')" class="px-4 py-2 bg-stone-100 text-stone-700 rounded hover:bg-stone-200">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded transition">
+                        Post & Issue Invoice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: RECORD VENDOR BILL (PURCHASE) -->
+    <div id="purchaseModal" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white border border-stone-200 rounded-xl w-full max-w-lg p-5 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-stone-200 pb-3">
+                <h3 class="text-sm font-bold text-stone-900 flex items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-4 h-4 text-sky-700"></i>
+                    Record Purchase Bill
+                </h3>
+                <button onclick="closeModal('purchaseModal')" class="text-stone-500 hover:text-stone-900"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <form id="purchaseForm" onsubmit="handleCreatePurchase(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-stone-500 mb-1">Supplier / Vendor Account</label>
+                    <select id="purVendor" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                        <!-- Dynamic -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-stone-500 mb-1">Bill Date</label>
+                        <input type="date" id="purDate" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                    </div>
+                    <div>
+                        <label class="block text-stone-500 mb-1">Expense Account</label>
+                        <select id="purCategory" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                            <!-- Dynamic -->
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-stone-500 mb-1">Subtotal Bill Amount ($)</label>
+                        <input type="number" step="0.01" id="purSubtotal" oninput="recalcPurchaseTotals()" placeholder="0.00" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800" required>
+                    </div>
+                    <div>
+                        <label class="block text-stone-500 mb-1">Input Tax Credit (GST %)</label>
+                        <select id="purTaxRate" onchange="recalcPurchaseTotals()" class="w-full bg-stone-100 border border-stone-300 rounded p-2 text-stone-800">
+                            <option value="18">18% Standard Input Tax</option>
+                            <option value="5">5% Reduced Tax</option>
+                            <option value="0">0% Exempt / Zero Rated</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-stone-100/80 p-3 rounded-lg space-y-1 font-mono text-xs border border-stone-300">
+                    <div class="flex justify-between text-stone-500">
+                        <span>Input Tax Amount:</span>
+                        <span id="purTaxVal" class="text-stone-800">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-stone-900 pt-1 border-t border-stone-300">
+                        <span>Total Net Payable:</span>
+                        <span id="purGrandTotal" class="text-sky-700">₹0.00</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-3 border-t border-stone-200">
+                    <button type="button" onclick="closeModal('purchaseModal')" class="px-4 py-2 bg-stone-100 text-stone-700 rounded hover:bg-stone-200">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-stone-900 font-medium rounded transition">
+                        Save Bill & Credit Vendor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ERP CORE JAVASCRIPT APPLICATION -->
+    
+    <div id="toast" class="no-print" aria-live="polite"></div>
+<script>
+        /**
+         * GLOBAL ERP STATE DATABASE (Pre-loaded Enterprise Mock Data)
+         */
+        
+        const STORAGE_KEY = 'nayan_retail_books_v1';
+        const DAYS_INTO_FY = 200;           // 1 Apr to ~19 Oct, used for stock-days / cash-cover ratios
+        const MONTHLY = {
+            labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+            sales:    [290000, 305000, 330000, 315000, 380000, 420000, 590000],
+            expenses: [225000, 232000, 250000, 240000, 290000, 320000, 477000]
+        };
+
+        function demoState() {
+            return {
+                accounts: [
+                    { code: '1010', name: 'Cash in Hand (Store Tills)', category: 'Asset', subCat: 'Liquid Assets', balance: 85000.00 },
+                    { code: '1020', name: 'Current Account (Business Bank)', category: 'Asset', subCat: 'Liquid Assets', balance: 640000.00 },
+                    { code: '1200', name: 'Accounts Receivable (Trade Debtors)', category: 'Asset', subCat: 'Current Assets', balance: 146500.00 },
+                    { code: '1300', name: 'Merchandise Inventory (Stock in Trade)', category: 'Asset', subCat: 'Current Assets', balance: 980000.00 },
+                    { code: '1500', name: 'Store Fixtures, Racks & POS Machines', category: 'Asset', subCat: 'Fixed Assets', balance: 450000.00 },
+                    { code: '1600', name: 'Input Tax Credit (GST)', category: 'Asset', subCat: 'Tax Assets', balance: 64000.00 },
+
+                    { code: '2010', name: 'Accounts Payable (Suppliers)', category: 'Liability', subCat: 'Current Liabilities', balance: 310000.00 },
+                    { code: '2100', name: 'Output GST Payable', category: 'Liability', subCat: 'Tax Liabilities', balance: 92000.00 },
+                    { code: '2200', name: 'Cash Credit Facility (Bank)', category: 'Liability', subCat: 'Short Term Loans', balance: 400000.00 },
+
+                    { code: '3010', name: "Owner's Share Capital", category: 'Equity', subCat: 'Equity', balance: 800000.00 },
+                    { code: '3020', name: 'Retained Earnings', category: 'Equity', subCat: 'Equity', balance: 167500.00 },
+
+                    { code: '4010', name: 'Retail Store Sales', category: 'Income', subCat: 'Operating Revenue', balance: 2150000.00 },
+                    { code: '4020', name: 'Online & Wholesale Sales', category: 'Income', subCat: 'Operating Revenue', balance: 480000.00 },
+
+                    { code: '5010', name: 'Cost of Goods Sold (COGS)', category: 'Expense', subCat: 'Direct Costs', balance: 1520000.00 },
+                    { code: '5020', name: 'Staff Salaries & Wages', category: 'Expense', subCat: 'Operating Expenses', balance: 310000.00 },
+                    { code: '5030', name: 'Store Rent & Utilities', category: 'Expense', subCat: 'Operating Expenses', balance: 120000.00 },
+                    { code: '5040', name: 'Marketing, Packaging & Delivery', category: 'Expense', subCat: 'Operating Expenses', balance: 84000.00 }
+                ],
+                vouchers: [
+                    { id: 'VOUCH-1001', date: '2026-10-01', type: 'Sales', narration: 'Festive stock sale to Sharma General Stores (INV-2026-001)', total: 118000.00,
+                      lines: [ { accCode: '1200', debit: 118000, credit: 0 }, { accCode: '4020', debit: 0, credit: 100000 }, { accCode: '2100', debit: 0, credit: 18000 } ] },
+                    { id: 'VOUCH-1002', date: '2026-10-02', type: 'Purchase', narration: 'Stock bought from Deccan Apparel Suppliers (BILL-8801)', total: 177000.00,
+                      lines: [ { accCode: '5010', debit: 150000, credit: 0 }, { accCode: '1600', debit: 27000, credit: 0 }, { accCode: '2010', debit: 0, credit: 177000 } ] },
+                    { id: 'VOUCH-1003', date: '2026-10-05', type: 'Payment', narration: 'October store rent paid to Shivaji Nagar Properties', total: 40000.00,
+                      lines: [ { accCode: '5030', debit: 40000, credit: 0 }, { accCode: '1020', debit: 0, credit: 40000 } ] },
+                    { id: 'VOUCH-1004', date: '2026-10-10', type: 'Receipt', narration: 'Part payment received from Sharma General Stores', total: 60000.00,
+                      lines: [ { accCode: '1020', debit: 60000, credit: 0 }, { accCode: '1200', debit: 0, credit: 60000 } ] },
+                    { id: 'VOUCH-1005', date: '2026-10-14', type: 'Payment', narration: 'September staff salaries paid', total: 62000.00,
+                      lines: [ { accCode: '5020', debit: 62000, credit: 0 }, { accCode: '1020', debit: 0, credit: 62000 } ] }
+                ],
+                invoices: [
+                    { id: 'INV-2026-001', date: '2026-10-01', customer: 'Sharma General Stores', taxType: 'INTRA', subtotal: 100000.00, taxAmount: 18000.00, grandTotal: 118000.00, paid: 60000.00, status: 'Partial',
+                      items: [{ desc: "Men's Cotton Shirts (box of 10) x 40", qty: 40, rate: 2500.00, amount: 100000.00 }] },
+                    { id: 'INV-2026-002', date: '2026-10-12', customer: 'Kulkarni Wholesale Traders', taxType: 'INTER', subtotal: 75000.00, taxAmount: 13500.00, grandTotal: 88500.00, paid: 0, status: 'Unpaid',
+                      items: [{ desc: 'Kids Winter Wear Assorted Lot', qty: 150, rate: 500.00, amount: 75000.00 }] }
+                ],
+                purchases: [
+                    { id: 'BILL-8801', date: '2026-10-02', vendor: 'Deccan Apparel Suppliers', category: 'Cost of Goods Sold (COGS)', subtotal: 150000.00, taxAmount: 27000.00, grandTotal: 177000.00, status: 'Posted' }
+                ],
+                auditLogs: [
+                    { timestamp: '2026-10-18 09:15:22', user: 'System', category: 'System', desc: 'Opening ledger balances loaded for FY 2026-27', impact: '₹0.00' },
+                    { timestamp: '2026-10-18 10:00:12', user: 'Nayan (Owner)', category: 'Voucher Post', desc: 'Posted Voucher VOUCH-1001 for Sharma General Stores', impact: '₹1,18,000.00' }
+                ]
+            };
+        }
+
+        function loadSaved() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return parsed && parsed.accounts && parsed.vouchers ? parsed : null;
+            } catch (e) { return null; }
+        }
+        function saveState() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* storage may be blocked */ }
+        }
+        function resetDemo() {
+            if (!confirm('Reset all data back to the demo books? Anything you posted will be lost.')) return;
+            try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+            location.reload();
+        }
+
+        let state = loadSaved() || demoState();
+
+        // Formatting helpers (Indian digit grouping: 1,18,000.00)
+        function fmt(n) {
+            n = Number(n) || 0;
+            return (n < 0 ? '-' : '') + '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function fmtShort(n) {
+            n = Number(n) || 0; const a = Math.abs(n); const sign = n < 0 ? '-' : '';
+            if (a >= 10000000) return sign + '₹' + (a / 10000000).toFixed(2) + ' Cr';
+            if (a >= 100000) return sign + '₹' + (a / 100000).toFixed(2) + ' L';
+            return sign + '₹' + a.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+        }
+        function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        function toast(msg) {
+            const box = document.getElementById('toast'); if (!box) return;
+            const d = document.createElement('div'); d.className = 'toast-item'; d.textContent = msg;
+            box.appendChild(d); setTimeout(() => d.remove(), 3200);
+        }
+        const accBal = code => (state.accounts.find(a => a.code === code) || { balance: 0 }).balance;
+        const sumCat = cat => state.accounts.filter(a => a.category === cat).reduce((s, a) => s + a.balance, 0);
+
+// Charts instances
+        let revExpChart = null;
+        let assetChart = null;
+
+        // Current temporary voucher rows state
+        let currentVoucherRows = [];
+        let currentInvoiceItems = [];
+
+        // Application Initialization
+        window.onload = function() {
+            applySavedTheme();
+            lucide.createIcons();
+            setDefaultDates();
+            recalculateAllFinancials();
+            initCharts();
+            renderDashboardWidgets();
+            renderCoA();
+            renderVoucherRegister();
+            renderSalesInvoices();
+            renderPurchaseBills();
+            populateDropdowns();
+            renderAccountLedger();
+            renderAuditTrail();
+            addToolbars();
+            setupSearch();
+            lucide.createIcons();
+        };
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') ['addAccountModal', 'voucherModal', 'invoiceModal', 'purchaseModal'].forEach(closeModal);
+        });
+
+        function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0];
+            if(document.getElementById('vDate')) document.getElementById('vDate').value = today;
+            if(document.getElementById('invDate')) document.getElementById('invDate').value = today;
+            if(document.getElementById('purDate')) document.getElementById('purDate').value = today;
+        }
+
+        function logAudit(user, category, desc, impact) {
+            const now = new Date();
+            const timeStr = now.toISOString().replace('T', ' ').substring(0, 19);
+            state.auditLogs.unshift({ timestamp: timeStr, user: user, category: category, desc: desc, impact: impact });
+            renderAuditTrail();
+            saveState();
+            toast(category + ' saved');
+        }
+
+        // TAB SWITCHING SYSTEM
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('text-stone-500');
+            });
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) { activeBtn.classList.add('active'); activeBtn.classList.remove('text-stone-500'); }
+            if (tabId === 'dashboard' && revExpChart) { revExpChart.update(); assetChart.update(); }
+            else if (tabId === 'reports') renderReports();
+            else if (tabId === 'ledger') renderAccountLedger();
+        }
+
+        function switchReportSubTab(subId) {
+            ['tb', 'pnl', 'bs'].forEach(id => {
+                document.getElementById(`report-sub-${id}`).classList.add('hidden');
+                const b = document.getElementById(`subtab-btn-${id}`);
+                b.classList.remove('text-brand-700', 'border-b-2', 'border-brand-600');
+                b.classList.add('text-stone-500');
+            });
+            document.getElementById(`report-sub-${subId}`).classList.remove('hidden');
+            const a = document.getElementById(`subtab-btn-${subId}`);
+            a.classList.add('text-brand-700', 'border-b-2', 'border-brand-600');
+            a.classList.remove('text-stone-500');
+        }
+
+        // FINANCIAL RECALCULATION ENGINE
+        function recalculateAllFinancials() {
+            const totalSales = sumCat('Income');
+            const totalExpenses = sumCat('Expense');
+            const cogs = accBal('5010');
+            const netProfit = totalSales - totalExpenses;
+            const marginPct = totalSales > 0 ? ((netProfit / totalSales) * 100).toFixed(1) : 0;
+
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+            set('kpi-sales', fmt(totalSales));
+            set('kpi-purchases', fmt(cogs));
+            set('kpi-receivables', fmt(accBal('1200')));
+            set('kpi-payables', fmt(accBal('2010')));
+            set('kpi-cash', fmt(accBal('1010') + accBal('1020')));
+            set('kpi-netprofit', fmt(netProfit));
+            set('kpi-margin-pct', `${marginPct}% of sales kept as profit`);
+
+            // Books balanced pill (trial balance check)
+            let dr = 0, cr = 0;
+            state.accounts.forEach(a => {
+                const debitNature = a.category === 'Asset' || a.category === 'Expense';
+                if ((a.balance >= 0) === debitNature) dr += Math.abs(a.balance); else cr += Math.abs(a.balance);
+            });
+            const ok = Math.abs(dr - cr) < 0.01;
+            const pill = document.getElementById('balancePill');
+            if (pill) {
+                pill.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ' +
+                    (ok ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20' : 'bg-rose-500/10 text-rose-700 border-rose-500/20');
+                set('balanceText', ok ? 'Books balanced' : 'Trial balance differs by ' + fmt(Math.abs(dr - cr)));
+            }
+
+            renderDashboardWidgets();
+            renderInsights();
+            updateAssetChart();
+            renderReports();
+            saveState();
+        }
+
+        // RENDER DASHBOARD SPECIFIC WIDGETS
+        function renderDashboardWidgets() {
+            const recent = document.getElementById('dashboardRecentVouchers');
+            recent.innerHTML = state.vouchers.slice(-5).reverse().map(v => `
+                <tr class="hover:bg-stone-50">
+                    <td class="py-2.5 px-3 font-mono text-brand-700">${v.id}</td>
+                    <td class="py-2.5 px-3">${v.date}</td>
+                    <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] bg-stone-100 border border-stone-200">${v.type}</span></td>
+                    <td class="py-2.5 px-3 text-stone-700 truncate max-w-xs">${esc(v.narration)}</td>
+                    <td class="py-2.5 px-3 text-right font-mono font-bold text-stone-900">${fmt(v.total)}</td>
+                </tr>`).join('');
+
+            const box = document.getElementById('dashboardPendingReceivables');
+            const open = state.invoices.filter(i => outstanding(i) > 0.005);
+            if (!open.length) {
+                box.innerHTML = '<div class="text-xs text-stone-500 py-4 text-center">All customer invoices are settled.</div>';
+                return;
+            }
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            box.innerHTML = open.map(i => {
+                const due = new Date(i.date); due.setDate(due.getDate() + 30);
+                const days = Math.round((due - today) / 86400000);
+                const dueTxt = days < 0 ? `<span class="text-rose-600 font-semibold">${-days} days overdue</span>` : `Due in ${days} days`;
+                return `<div class="p-2.5 bg-stone-50 rounded-lg border border-stone-200 flex justify-between items-center text-xs">
+                    <div><div class="font-bold text-stone-800">${esc(i.customer)}</div>
+                    <div class="text-[10px] text-stone-500 font-mono">${i.id} &bull; ${dueTxt}</div></div>
+                    <div class="text-right"><div class="font-bold font-mono text-amber-700">${fmt(outstanding(i))}</div>
+                    <span class="text-[10px] text-stone-500">${i.status}</span></div></div>`;
+            }).join('');
+        }
+
+        function outstanding(inv) { return inv.grandTotal - (inv.paid || 0); }
+
+        function renderInsights() {
+            const sales = sumCat('Income'), exp = sumCat('Expense'), cogs = accBal('5010');
+            const np = sales - exp;
+            const currentAssets = state.accounts.filter(a => a.category === 'Asset' && ['Liquid Assets', 'Current Assets', 'Tax Assets'].includes(a.subCat)).reduce((s, a) => s + a.balance, 0);
+            const liquid = accBal('1010') + accBal('1020') + accBal('1200');
+            const liabilities = sumCat('Liability');
+            const equity = sumCat('Equity') + np;
+            const curLiab = liabilities || 1;
+            const gm = sales ? (sales - cogs) / sales * 100 : 0;
+            const nm = sales ? np / sales * 100 : 0;
+            const cr = currentAssets / curLiab;
+            const qr = liquid / curLiab;
+            const de = equity > 0 ? liabilities / equity : 0;
+            const stockDays = cogs ? accBal('1300') / cogs * DAYS_INTO_FY : 0;
+            const collDays = sales ? accBal('1200') / sales * DAYS_INTO_FY : 0;
+            const monthlyExp = exp / (DAYS_INTO_FY / 30);
+            const cover = monthlyExp ? (accBal('1010') + accBal('1020')) / monthlyExp : 0;
+            const tone = (good, warn, v, higherBetter = true) =>
+                higherBetter ? (v >= good ? 'good' : v >= warn ? 'warn' : 'bad') : (v <= good ? 'good' : v <= warn ? 'warn' : 'bad');
+            const tiles = [
+                { l: 'Gross margin', v: gm.toFixed(1) + '%', h: 'Profit left after buying the stock', t: tone(25, 15, gm) },
+                { l: 'Net margin', v: nm.toFixed(1) + '%', h: 'After all expenses', t: tone(10, 5, nm) },
+                { l: 'Current ratio', v: cr.toFixed(2), h: 'Above 1.5 is comfortable', t: tone(1.5, 1, cr) },
+                { l: 'Quick ratio', v: qr.toFixed(2), h: 'Cash + debtors vs dues', t: tone(1, 0.7, qr) },
+                { l: 'Debt to equity', v: de.toFixed(2), h: 'Below 1 means low borrowing', t: tone(1, 2, de, false) },
+                { l: 'Stock days', v: Math.round(stockDays) + ' days', h: 'How long stock sits on shelves', t: tone(90, 150, stockDays, false) },
+                { l: 'Collection days', v: Math.round(collDays) + ' days', h: 'Time to collect from customers', t: tone(30, 60, collDays, false) },
+                { l: 'Cash cover', v: cover.toFixed(1) + ' months', h: 'Cash vs monthly expenses', t: tone(2, 1, cover) }
+            ];
+            const cls = { good: 'bg-emerald-50 border-emerald-200 text-emerald-800', warn: 'bg-amber-50 border-amber-200 text-amber-800', bad: 'bg-rose-50 border-rose-200 text-rose-800' };
+            document.getElementById('ratioGrid').innerHTML = tiles.map(x => `
+                <div class="rounded-lg border p-3 ${cls[x.t]}">
+                    <div class="text-[11px] font-medium opacity-80">${x.l}</div>
+                    <div class="text-lg font-bold leading-tight">${x.v}</div>
+                    <div class="text-[10px] opacity-80 mt-0.5">${x.h}</div>
+                </div>`).join('');
+
+            const out = accBal('2100'), itc = accBal('1600'), net = out - itc;
+            document.getElementById('gstBox').innerHTML = `
+                <div class="flex justify-between"><span class="text-stone-600">GST collected on sales</span><span class="font-mono font-semibold">${fmt(out)}</span></div>
+                <div class="flex justify-between"><span class="text-stone-600">Input credit on purchases</span><span class="font-mono font-semibold">- ${fmt(itc)}</span></div>
+                <div class="flex justify-between pt-2 border-t border-stone-200 text-sm font-bold ${net >= 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                    <span>${net >= 0 ? 'Net GST to pay' : 'GST credit carried forward'}</span><span class="font-mono">${fmt(Math.abs(net))}</span></div>
+                <p class="text-[11px] text-stone-500 pt-1">Monthly GSTR-3B is due by the 20th of the next month.</p>`;
+        }
+
+        // CHART.JS INITIALIZATION
+        function themeColors() {
+            const cs = getComputedStyle(document.documentElement);
+            const rgb = cs.getPropertyValue('--b600').trim().split(/\s+/).map(Number);
+            const hex = '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('');
+            return { brand: hex, accent: cs.getPropertyValue('--accent').trim() };
+        }
+        function assetBreakdown() {
+            return {
+                labels: ['Cash & bank', 'Receivables', 'Stock', 'Fixtures & POS', 'GST credit'],
+                data: [accBal('1010') + accBal('1020'), accBal('1200'), accBal('1300'), accBal('1500'), accBal('1600')]
+            };
+        }
+        function updateAssetChart() {
+            if (!assetChart) return;
+            assetChart.data.datasets[0].data = assetBreakdown().data;
+            assetChart.update();
+        }
+        function initCharts() {
+            const c = themeColors();
+            if (revExpChart) revExpChart.destroy();
+            if (assetChart) assetChart.destroy();
+            const profit = MONTHLY.sales.map((s, i) => s - MONTHLY.expenses[i]);
+            Chart.defaults.font.family = '"Plus Jakarta Sans", system-ui, sans-serif';
+            revExpChart = new Chart(document.getElementById('chartRevenueExpenses').getContext('2d'), {
+                data: {
+                    labels: MONTHLY.labels,
+                    datasets: [
+                        { type: 'bar', label: 'Sales (₹)', data: MONTHLY.sales, backgroundColor: c.brand, borderRadius: 4 },
+                        { type: 'bar', label: 'Expenses (₹)', data: MONTHLY.expenses, backgroundColor: '#d6d3d1', borderRadius: 4 },
+                        { type: 'line', label: 'Profit (₹)', data: profit, borderColor: c.accent, backgroundColor: c.accent, tension: 0.3, pointRadius: 3 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#57534e', font: { size: 11 } } },
+                        tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label.replace(' (₹)', '') + ': ' + fmtShort(ctx.parsed.y) } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#78716c' }, grid: { display: false } },
+                        y: { ticks: { color: '#78716c', callback: v => fmtShort(v) }, grid: { color: '#e7e5e4' } }
+                    }
+                }
+            });
+            const ab = assetBreakdown();
+            assetChart = new Chart(document.getElementById('chartAssetStructure').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: ab.labels, datasets: [{ data: ab.data, backgroundColor: [c.brand, '#f59e0b', c.accent, '#78716c', '#a8a29e'], borderColor: '#fff', borderWidth: 2 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '62%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#57534e', font: { size: 10 } } },
+                        tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + fmtShort(ctx.parsed) } }
+                    }
+                }
+            });
+        }
+
+        // THEMES (three light palettes)
+        const THEMES = [['mint', 'Mint'], ['plum', 'Plum'], ['sun', 'Sunrise']];
+        function applyTheme(key) {
+            const t = THEMES.find(x => x[0] === key) || THEMES[0];
+            document.documentElement.setAttribute('data-theme', t[0]);
+            const n = document.getElementById('themeName'); if (n) n.innerText = t[1];
+            try { localStorage.setItem('nayan_theme', t[0]); } catch (e) {}
+        }
+        function applySavedTheme() {
+            let k = 'mint'; try { k = localStorage.getItem('nayan_theme') || 'mint'; } catch (e) {}
+            applyTheme(k);
+        }
+        function toggleTheme() {
+            const cur = document.documentElement.getAttribute('data-theme') || 'mint';
+            const i = THEMES.findIndex(x => x[0] === cur);
+            applyTheme(THEMES[(i + 1) % THEMES.length][0]);
+            initCharts();
+        }
+
+        // CHART OF ACCOUNTS (CoA) LOGIC
+        function renderCoA(filterCat = 'ALL', searchQuery = '') {
+            const tbody = document.getElementById('coaTableBody');
+            tbody.innerHTML = '';
+
+            let filtered = state.accounts;
+            if (filterCat !== 'ALL') {
+                if(filterCat === 'Income') {
+                    filtered = filtered.filter(a => a.category === 'Income' || a.category === 'Expense');
+                } else {
+                    filtered = filtered.filter(a => a.category === filterCat);
+                }
+            }
+            if (searchQuery) {
+                filtered = filtered.filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()) || a.code.includes(searchQuery));
+            }
+
+            // Category Counts
+            document.getElementById('coa-count-all').innerText = state.accounts.length;
+            document.getElementById('coa-count-assets').innerText = state.accounts.filter(a => a.category === 'Asset').length;
+            document.getElementById('coa-count-liabilities').innerText = state.accounts.filter(a => a.category === 'Liability').length;
+            document.getElementById('coa-count-equity').innerText = state.accounts.filter(a => a.category === 'Equity').length;
+            document.getElementById('coa-count-pnl').innerText = state.accounts.filter(a => a.category === 'Income' || a.category === 'Expense').length;
+
+            filtered.forEach(acc => {
+                let catBadge = 'bg-stone-100 text-stone-700';
+                if(acc.category === 'Asset') catBadge = 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20';
+                if(acc.category === 'Liability') catBadge = 'bg-rose-500/10 text-rose-600 border border-rose-500/20';
+                if(acc.category === 'Equity') catBadge = 'bg-indigo-500/10 text-indigo-700 border border-indigo-500/20';
+                if(acc.category === 'Income') catBadge = 'bg-amber-500/10 text-amber-700 border border-amber-500/20';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-stone-100/50">
+                        <td class="p-3 font-mono font-bold text-stone-800">${acc.code}</td>
+                        <td class="p-3 font-medium text-stone-900">${acc.name}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] ${catBadge}">${acc.category}</span></td>
+                        <td class="p-3 text-stone-500">${acc.subCat}</td>
+                        <td class="p-3 text-right font-mono font-bold ${acc.balance >= 0 ? 'text-stone-900' : 'text-rose-600'}">${fmt(acc.balance)}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="inspectAccount('${acc.code}')" class="text-xs text-brand-700 hover:underline">View Ledger</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function filterCoA() {
+            const q = document.getElementById('coaSearch').value;
+            renderCoA('ALL', q);
+        }
+
+        function filterCoACategory(cat) {
+            renderCoA(cat);
+        }
+
+        function inspectAccount(code) {
+            switchTab('ledger');
+            document.getElementById('ledgerAccountSelect').value = code;
+            renderAccountLedger();
+        }
+
+        function handleAddAccount(e) {
+            e.preventDefault();
+            const type = document.getElementById('newAccType').value;
+            const name = document.getElementById('newAccName').value;
+            const subCat = document.getElementById('newAccSubCat').value;
+            const bal = parseFloat(document.getElementById('newAccBalance').value) || 0;
+
+            const newCode = (1000 + state.accounts.length * 10 + Math.floor(Math.random() * 9)).toString();
+            state.accounts.push({
+                code: newCode,
+                name: name,
+                category: type,
+                subCat: subCat,
+                balance: bal
+            });
+
+            logAudit('Nayan (Owner)', 'CoA Master', `Created new account: ${name} (${newCode})`, `${fmt(bal)}`);
+            closeModal('addAccountModal');
+            renderCoA();
+            populateDropdowns();
+            recalculateAllFinancials();
+        }
+
+        // DOUBLE ENTRY VOUCHER ENTRY SYSTEM
+        function openVoucherModal(vType = 'Journal') {
+            document.getElementById('voucherForm').reset();
+            setDefaultDates();
+            document.getElementById('vType').value = vType;
+            currentVoucherRows = [
+                { accCode: state.accounts[0].code, debit: 0, credit: 0 },
+                { accCode: state.accounts[1].code, debit: 0, credit: 0 }
+            ];
+            renderVoucherInputTable();
+            document.getElementById('voucherModal').classList.remove('hidden');
+        }
+
+        function addVoucherRow() {
+            currentVoucherRows.push({ accCode: state.accounts[0].code, debit: 0, credit: 0 });
+            renderVoucherInputTable();
+        }
+
+        function removeVoucherRow(index) {
+            if(currentVoucherRows.length <= 2) {
+                toast("A double-entry voucher requires at least two account lines.");
+                return;
+            }
+            currentVoucherRows.splice(index, 1);
+            renderVoucherInputTable();
+        }
+
+        function renderVoucherInputTable() {
+            const tbody = document.getElementById('voucherRowsBody');
+            tbody.innerHTML = '';
+
+            currentVoucherRows.forEach((row, i) => {
+                const accOptions = state.accounts.map(a => 
+                    `<option value="${a.code}" ${a.code === row.accCode ? 'selected' : ''}>[${a.code}] ${a.name}</option>`
+                ).join('');
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-2">
+                            <select onchange="updateVoucherRow(${i}, 'accCode', this.value)" class="w-full bg-stone-100 border border-stone-300 rounded p-1.5 text-xs text-stone-800">
+                                ${accOptions}
+                            </select>
+                        </td>
+                        <td class="p-2">
+                            <input type="number" step="0.01" value="${row.debit || ''}" placeholder="0.00" oninput="updateVoucherRow(${i}, 'debit', this.value)" 
+                                class="w-full bg-stone-100 border border-stone-300 rounded p-1.5 text-xs text-right font-mono text-stone-800">
+                        </td>
+                        <td class="p-2">
+                            <input type="number" step="0.01" value="${row.credit || ''}" placeholder="0.00" oninput="updateVoucherRow(${i}, 'credit', this.value)" 
+                                class="w-full bg-stone-100 border border-stone-300 rounded p-1.5 text-xs text-right font-mono text-stone-800">
+                        </td>
+                        <td class="p-2 text-center">
+                            <button type="button" onclick="removeVoucherRow(${i})" class="text-rose-600 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+            validateVoucherBalance();
+        }
+
+        function updateVoucherRow(index, field, value) {
+            if(field === 'accCode') {
+                currentVoucherRows[index].accCode = value;
+            } else if(field === 'debit') {
+                currentVoucherRows[index].debit = parseFloat(value) || 0;
+                if(currentVoucherRows[index].debit > 0) currentVoucherRows[index].credit = 0; // standard single line behavior
+            } else if(field === 'credit') {
+                currentVoucherRows[index].credit = parseFloat(value) || 0;
+                if(currentVoucherRows[index].credit > 0) currentVoucherRows[index].debit = 0;
+            }
+            renderVoucherInputTable();
+        }
+
+        function validateVoucherBalance() {
+            const totalDebit = currentVoucherRows.reduce((sum, r) => sum + (r.debit || 0), 0);
+            const totalCredit = currentVoucherRows.reduce((sum, r) => sum + (r.credit || 0), 0);
+            const diff = Math.abs(totalDebit - totalCredit);
+
+            document.getElementById('lblTotalDebit').innerText = `${fmt(totalDebit)}`;
+            document.getElementById('lblTotalCredit').innerText = `${fmt(totalCredit)}`;
+
+            const postBtn = document.getElementById('btnPostVoucher');
+            const diffLbl = document.getElementById('lblBalanceDiff');
+
+            if (diff < 0.01 && totalDebit > 0) {
+                diffLbl.className = 'text-xs font-bold text-emerald-700';
+                diffLbl.innerText = '✓ Balanced (Ready to Post)';
+                postBtn.disabled = false;
+            } else {
+                diffLbl.className = 'text-xs font-bold text-rose-600';
+                diffLbl.innerText = `Out of Balance Diff: ₹{fmt(diff)}`;
+                postBtn.disabled = true;
+            }
+        }
+
+        function handlePostVoucher(e) {
+            e.preventDefault();
+            const vType = document.getElementById('vType').value;
+            const vDate = document.getElementById('vDate').value;
+            const narration = document.getElementById('vNarration').value;
+
+            const totalDebit = currentVoucherRows.reduce((sum, r) => sum + (r.debit || 0), 0);
+            const vId = `VOUCH-${1000 + state.vouchers.length + 1}`;
+
+            // Update ledger account balances in state
+            currentVoucherRows.forEach(row => {
+                const acc = state.accounts.find(a => a.code === row.accCode);
+                if (acc) {
+                    if (acc.category === 'Asset' || acc.category === 'Expense') {
+                        acc.balance += (row.debit - row.credit);
+                    } else {
+                        acc.balance += (row.credit - row.debit);
+                    }
+                }
+            });
+
+            state.vouchers.push({
+                id: vId,
+                date: vDate,
+                type: vType,
+                narration: narration,
+                total: totalDebit,
+                lines: [...currentVoucherRows]
+            });
+
+            logAudit('Nayan (Owner)', 'Voucher Post', `Posted ${vType} Voucher ${vId}: ${narration}`, `${fmt(totalDebit)}`);
+            closeModal('voucherModal');
+            recalculateAllFinancials();
+            renderVoucherRegister();
+            renderCoA();
+        }
+
+        function renderVoucherRegister() {
+            const tbody = document.getElementById('voucherRegisterBody');
+            const filterType = document.getElementById('voucherFilterType').value;
+            tbody.innerHTML = '';
+
+            let list = state.vouchers;
+            if(filterType !== 'ALL') list = list.filter(v => v.type === filterType);
+
+            list.slice().reverse().forEach(v => {
+                const accNames = v.lines.map(l => {
+                    const acc = state.accounts.find(a => a.code === l.accCode);
+                    return acc ? acc.name : l.accCode;
+                }).join(', ');
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-stone-100/50">
+                        <td class="p-3 font-mono font-bold text-brand-700">${v.id}</td>
+                        <td class="p-3">${v.date}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] bg-stone-100 border border-stone-300">${v.type}</span></td>
+                        <td class="p-3 text-stone-700 max-w-xs truncate">${accNames}</td>
+                        <td class="p-3 text-stone-500 max-w-xs truncate">${v.narration}</td>
+                        <td class="p-3 text-right font-mono font-bold text-emerald-700">${fmt(v.total)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-emerald-700">${fmt(v.total)}</td>
+                        <td class="p-3 text-center"><span class="text-[10px] bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 px-1.5 py-0.5 rounded">POSTED</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // SALES & INVOICING MODULE
+        function openInvoiceModal() {
+            document.getElementById('invoiceForm').reset();
+            setDefaultDates();
+            currentInvoiceItems = [{ desc: 'Cotton Shirts (box of 10)', qty: 1, rate: 5000.00 }];
+            renderInvoiceItemRows();
+            document.getElementById('invoiceModal').classList.remove('hidden');
+        }
+
+        function addInvoiceItemRow() {
+            currentInvoiceItems.push({ desc: 'Retail merchandise item', qty: 1, rate: 1000.00 });
+            renderInvoiceItemRows();
+        }
+
+        function removeInvoiceItemRow(idx) {
+            if(currentInvoiceItems.length <= 1) return;
+            currentInvoiceItems.splice(idx, 1);
+            renderInvoiceItemRows();
+        }
+
+        function renderInvoiceItemRows() {
+            const tbody = document.getElementById('invoiceItemsBody');
+            tbody.innerHTML = '';
+
+            currentInvoiceItems.forEach((item, i) => {
+                const amt = (item.qty || 0) * (item.rate || 0);
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="p-2">
+                            <input type="text" value="${item.desc}" oninput="updateInvoiceItem(${i}, 'desc', this.value)" class="w-full bg-stone-100 border border-stone-300 rounded p-1.5 text-xs text-stone-800">
+                        </td>
+                        <td class="p-2">
+                            <input type="number" value="${item.qty}" oninput="updateInvoiceItem(${i}, 'qty', this.value)" class="w-full bg-stone-100 border border-stone-300 rounded p-1.5 text-xs text-center text-stone-800">
+                        </td>
+                        <td class="p-2">
+                            <input type="number" step="0.01" value="${item.rate}" oninput="updateInvoiceItem(${i}, 'rate', this.value)" class="w-full bg-stone-100 border border-stone-300 rounded p-1.5 text-xs text-right text-stone-800">
+                        </td>
+                        <td class="p-2 text-right font-mono font-bold text-stone-900">
+                            ${fmt(amt)}
+                        </td>
+                        <td class="p-2 text-center">
+                            <button type="button" onclick="removeInvoiceItemRow(${i})" class="text-rose-600 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+            recalcInvoiceTotals();
+        }
+
+        function updateInvoiceItem(i, field, val) {
+            if(field === 'desc') currentInvoiceItems[i].desc = val;
+            if(field === 'qty') currentInvoiceItems[i].qty = parseFloat(val) || 0;
+            if(field === 'rate') currentInvoiceItems[i].rate = parseFloat(val) || 0;
+            renderInvoiceItemRows();
+        }
+
+        function recalcInvoiceTotals() {
+            const subtotal = currentInvoiceItems.reduce((s, item) => s + (item.qty * item.rate), 0);
+            const taxType = document.getElementById('invTaxType').value;
+
+            let cgst = 0, sgst = 0, igst = 0;
+
+            if (taxType === 'INTRA') {
+                cgst = subtotal * 0.09;
+                sgst = subtotal * 0.09;
+                document.getElementById('rowCgst').classList.remove('hidden');
+                document.getElementById('rowSgst').classList.remove('hidden');
+                document.getElementById('rowIgst').classList.add('hidden');
+            } else if (taxType === 'INTER') {
+                igst = subtotal * 0.18;
+                document.getElementById('rowCgst').classList.add('hidden');
+                document.getElementById('rowSgst').classList.add('hidden');
+                document.getElementById('rowIgst').classList.remove('hidden');
+            } else {
+                document.getElementById('rowCgst').classList.add('hidden');
+                document.getElementById('rowSgst').classList.add('hidden');
+                document.getElementById('rowIgst').classList.add('hidden');
+            }
+
+            const grandTotal = subtotal + cgst + sgst + igst;
+
+            document.getElementById('invSubtotal').innerText = `${fmt(subtotal)}`;
+            document.getElementById('invCgst').innerText = `${fmt(cgst)}`;
+            document.getElementById('invSgst').innerText = `${fmt(sgst)}`;
+            document.getElementById('invIgst').innerText = `${fmt(igst)}`;
+            document.getElementById('invGrandTotal').innerText = `${fmt(grandTotal)}`;
+        }
+
+        function handleCreateInvoice(e) {
+            e.preventDefault();
+            const customer = document.getElementById('invCustomer').value;
+            const date = document.getElementById('invDate').value;
+            const taxType = document.getElementById('invTaxType').value;
+
+            const subtotal = currentInvoiceItems.reduce((s, item) => s + (item.qty * item.rate), 0);
+            const taxAmt = taxType === 'EXEMPT' ? 0 : subtotal * 0.18;
+            const grandTotal = subtotal + taxAmt;
+
+            const invId = `INV-2026-${String(state.invoices.length + 1).padStart(3, '0')}`;
+
+            // Automatic Double Entry Journal Creation for Invoice:
+            // Debit Accounts Receivable (1200) -> Grand Total
+            // Credit Online & Wholesale Sales (4020) -> Subtotal
+            // Credit Output Tax Payable (2100) -> Tax Amount
+            const arAcc = state.accounts.find(a => a.code === '1200');
+            const salesAcc = state.accounts.find(a => a.code === '4020');
+            const taxAcc = state.accounts.find(a => a.code === '2100');
+
+            if(arAcc) arAcc.balance += grandTotal;
+            if(salesAcc) salesAcc.balance += subtotal;
+            if(taxAcc && taxAmt > 0) taxAcc.balance += taxAmt;
+
+            state.invoices.push({
+                id: invId,
+                date: date,
+                customer: customer,
+                taxType: taxType,
+                subtotal: subtotal,
+                taxAmount: taxAmt,
+                grandTotal: grandTotal,
+                status: 'Unpaid',
+                paid: 0,
+                items: [...currentInvoiceItems]
+            });
+
+            // Post auto voucher
+            state.vouchers.push({
+                id: `VOUCH-AUTO-${state.vouchers.length + 1}`,
+                date: date,
+                type: 'Sales',
+                narration: `Auto System Invoice Posting #${invId} for ${customer}`,
+                total: grandTotal,
+                lines: [
+                    { accCode: '1200', debit: grandTotal, credit: 0 },
+                    { accCode: '4020', debit: 0, credit: subtotal },
+                    ...(taxAmt > 0 ? [{ accCode: '2100', debit: 0, credit: taxAmt }] : [])
+                ]
+            });
+
+            logAudit('Nayan (Owner)', 'Sales Invoice', `Created Tax Invoice ${invId} for ${customer}`, `${fmt(grandTotal)}`);
+            closeModal('invoiceModal');
+            recalculateAllFinancials();
+            renderSalesInvoices();
+            renderVoucherRegister();
+        }
+
+        function renderSalesInvoices() {
+            const tbody = document.getElementById('salesInvoicesTableBody');
+            const taxLabel = { INTRA: 'CGST + SGST', INTER: 'IGST', EXEMPT: 'Exempt' };
+            tbody.innerHTML = state.invoices.slice().reverse().map(inv => {
+                const due = outstanding(inv);
+                const badge = inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
+                            : inv.status === 'Partial' ? 'bg-amber-500/10 text-amber-700 border-amber-500/20'
+                            : 'bg-rose-500/10 text-rose-700 border-rose-500/20';
+                const label = inv.status === 'Partial' ? `Partial (${fmtShort(due)} due)` : inv.status;
+                return `<tr class="hover:bg-stone-50">
+                    <td class="p-3 font-mono font-bold text-brand-700">${inv.id}</td>
+                    <td class="p-3">${inv.date}</td>
+                    <td class="p-3 font-semibold text-stone-900">${esc(inv.customer)}</td>
+                    <td class="p-3 text-stone-500">${taxLabel[inv.taxType] || inv.taxType}</td>
+                    <td class="p-3 text-right font-mono">${fmt(inv.subtotal)}</td>
+                    <td class="p-3 text-right font-mono">${fmt(inv.taxAmount)}</td>
+                    <td class="p-3 text-right font-mono font-bold text-stone-900">${fmt(inv.grandTotal)}</td>
+                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] border ${badge}">${label}</span></td>
+                    <td class="p-3 text-center">${due > 0.005
+                        ? `<button onclick="receiveInvoicePayment('${inv.id}')" class="px-2 py-1 bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-500/30 rounded text-[10px] font-medium">Record payment</button>`
+                        : '<span class="text-[10px] text-stone-400">Settled</span>'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function receiveInvoicePayment(invId) {
+            const inv = state.invoices.find(i => i.id === invId);
+            if (!inv) return;
+            const due = outstanding(inv);
+            if (due <= 0.005) { toast('This invoice is already fully paid.'); return; }
+            const input = prompt(`Amount received from ${inv.customer} (outstanding ${fmt(due)}):`, due.toFixed(2));
+            if (input === null) return;
+            const amt = parseFloat(input);
+            if (!(amt > 0) || amt > due + 0.005) { toast('Enter an amount between 0 and ' + fmt(due)); return; }
+
+            inv.paid = (inv.paid || 0) + amt;
+            inv.status = outstanding(inv) <= 0.005 ? 'Paid' : 'Partial';
+            const bank = state.accounts.find(a => a.code === '1020');
+            const ar = state.accounts.find(a => a.code === '1200');
+            if (bank) bank.balance += amt;
+            if (ar) ar.balance -= amt;
+            state.vouchers.push({
+                id: `VOUCH-REC-${state.vouchers.length + 1}`,
+                date: new Date().toISOString().split('T')[0],
+                type: 'Receipt',
+                narration: `${inv.status === 'Paid' ? 'Final' : 'Part'} payment for ${inv.id} from ${inv.customer}`,
+                total: amt,
+                lines: [ { accCode: '1020', debit: amt, credit: 0 }, { accCode: '1200', debit: 0, credit: amt } ]
+            });
+            logAudit('Nayan (Owner)', 'Payment Receipt', `Received ${fmt(amt)} against ${invId}`, fmt(amt));
+            recalculateAllFinancials();
+            renderSalesInvoices();
+            renderVoucherRegister();
+        }
+
+        // PURCHASES MODULE
+        function openPurchaseModal() {
+            document.getElementById('purchaseForm').reset();
+            setDefaultDates();
+            recalcPurchaseTotals();
+            document.getElementById('purchaseModal').classList.remove('hidden');
+        }
+
+        function recalcPurchaseTotals() {
+            const subtotal = parseFloat(document.getElementById('purSubtotal').value) || 0;
+            const taxRate = parseFloat(document.getElementById('purTaxRate').value) || 0;
+
+            const taxVal = subtotal * (taxRate / 100);
+            const grandTotal = subtotal + taxVal;
+
+            document.getElementById('purTaxVal').innerText = `${fmt(taxVal)}`;
+            document.getElementById('purGrandTotal').innerText = `${fmt(grandTotal)}`;
+        }
+
+        function handleCreatePurchase(e) {
+            e.preventDefault();
+            const vendor = document.getElementById('purVendor').value;
+            const date = document.getElementById('purDate').value;
+            const expAccCode = document.getElementById('purCategory').value;
+            const subtotal = parseFloat(document.getElementById('purSubtotal').value) || 0;
+            const taxRate = parseFloat(document.getElementById('purTaxRate').value) || 0;
+
+            const taxVal = subtotal * (taxRate / 100);
+            const grandTotal = subtotal + taxVal;
+            const billId = `BILL-880${state.purchases.length + 1}`;
+
+            // Automatic Ledger Post
+            // Debit Expense Account
+            // Debit Input Tax Credit (1600)
+            // Credit Accounts Payable (2010)
+            const expAcc = state.accounts.find(a => a.code === expAccCode);
+            const taxAcc = state.accounts.find(a => a.code === '1600');
+            const apAcc = state.accounts.find(a => a.code === '2010');
+
+            if(expAcc) expAcc.balance += subtotal;
+            if(taxAcc && taxVal > 0) taxAcc.balance += taxVal;
+            if(apAcc) apAcc.balance += grandTotal;
+
+            state.purchases.push({
+                id: billId,
+                date: date,
+                vendor: vendor,
+                category: expAcc ? expAcc.name : 'Expense',
+                subtotal: subtotal,
+                taxAmount: taxVal,
+                grandTotal: grandTotal,
+                status: 'Posted'
+            });
+
+            state.vouchers.push({
+                id: `VOUCH-PUR-${state.vouchers.length + 1}`,
+                date: date,
+                type: 'Purchase',
+                narration: `Purchase Bill #${billId} from ${vendor}`,
+                total: grandTotal,
+                lines: [
+                    { accCode: expAccCode, debit: subtotal, credit: 0 },
+                    ...(taxVal > 0 ? [{ accCode: '1600', debit: taxVal, credit: 0 }] : []),
+                    { accCode: '2010', debit: 0, credit: grandTotal }
+                ]
+            });
+
+            logAudit('Nayan (Owner)', 'Purchase Bill', `Recorded Vendor Bill ${billId} from ${vendor}`, `${fmt(grandTotal)}`);
+            closeModal('purchaseModal');
+            recalculateAllFinancials();
+            renderPurchaseBills();
+            renderVoucherRegister();
+        }
+
+        function renderPurchaseBills() {
+            const tbody = document.getElementById('purchaseBillsTableBody');
+            tbody.innerHTML = '';
+
+            state.purchases.slice().reverse().forEach(p => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-stone-100/50">
+                        <td class="p-3 font-mono font-bold text-sky-700">${p.id}</td>
+                        <td class="p-3">${p.date}</td>
+                        <td class="p-3 font-semibold text-stone-900">${p.vendor}</td>
+                        <td class="p-3 text-stone-500">${p.category}</td>
+                        <td class="p-3 text-right font-mono">${fmt(p.subtotal)}</td>
+                        <td class="p-3 text-right font-mono">${fmt(p.taxAmount)}</td>
+                        <td class="p-3 text-right font-mono font-bold text-stone-900">${fmt(p.grandTotal)}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] bg-stone-100 border border-stone-300 text-stone-700">POSTED</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // FINANCIAL STATEMENTS REPORT GENERATOR
+        function renderReports() {
+            // 1. Trial Balance Calculation
+            const tbBody = document.getElementById('trialBalanceBody');
+            tbBody.innerHTML = '';
+
+            let totalTBDebit = 0;
+            let totalTBCredit = 0;
+
+            state.accounts.forEach(acc => {
+                let dr = 0, cr = 0;
+                if (acc.category === 'Asset' || acc.category === 'Expense') {
+                    if (acc.balance >= 0) dr = acc.balance;
+                    else cr = Math.abs(acc.balance);
+                } else {
+                    if (acc.balance >= 0) cr = acc.balance;
+                    else dr = Math.abs(acc.balance);
+                }
+
+                totalTBDebit += dr;
+                totalTBCredit += cr;
+
+                tbBody.innerHTML += `
+                    <tr class="hover:bg-stone-100/40">
+                        <td class="p-2.5 font-mono text-stone-500">${acc.code}</td>
+                        <td class="p-2.5 font-medium text-stone-900">${acc.name}</td>
+                        <td class="p-2.5 text-stone-500">${acc.category} (${acc.subCat})</td>
+                        <td class="p-2.5 text-right font-mono text-stone-800">${dr > 0 ? fmt(dr) : '-'}</td>
+                        <td class="p-2.5 text-right font-mono text-stone-800">${cr > 0 ? fmt(cr) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('tbTotalDebit').innerText = `${fmt(totalTBDebit)}`;
+            document.getElementById('tbTotalCredit').innerText = `${fmt(totalTBCredit)}`;
+
+            const tbBadge = document.getElementById('tbVerificationBadge');
+            if (Math.abs(totalTBDebit - totalTBCredit) < 0.01) {
+                tbBadge.className = 'text-xs px-2.5 py-1 rounded font-mono bg-emerald-500/10 text-emerald-700 border border-emerald-500/20';
+                tbBadge.innerText = '✓ TRIAL BALANCE EQUAL (DEBITS = CREDITS)';
+            } else {
+                tbBadge.className = 'text-xs px-2.5 py-1 rounded font-mono bg-rose-500/10 text-rose-600 border border-rose-500/20';
+                tbBadge.innerText = '⚠ TRIAL BALANCE OUT OF BALANCE';
+            }
+
+            // 2. Profit & Loss Statement Calculation
+            const pnlRevContainer = document.getElementById('pnlRevenueRows');
+            const pnlExpContainer = document.getElementById('pnlExpenseRows');
+            pnlRevContainer.innerHTML = '';
+            pnlExpContainer.innerHTML = '';
+
+            let grossRevenue = 0;
+            let totalExpenses = 0;
+
+            state.accounts.forEach(acc => {
+                if(acc.category === 'Income') {
+                    grossRevenue += acc.balance;
+                    pnlRevContainer.innerHTML += `
+                        <div class="flex justify-between py-1 border-b border-stone-200/50">
+                            <span>${acc.name}</span>
+                            <span class="font-mono text-stone-800">${fmt(acc.balance)}</span>
+                        </div>
+                    `;
+                }
+                if(acc.category === 'Expense') {
+                    totalExpenses += acc.balance;
+                    pnlExpContainer.innerHTML += `
+                        <div class="flex justify-between py-1 border-b border-stone-200/50">
+                            <span>${acc.name}</span>
+                            <span class="font-mono text-stone-800">${fmt(acc.balance)}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            const netProfit = grossRevenue - totalExpenses;
+            document.getElementById('pnlTotalRevenue').innerText = `${fmt(grossRevenue)}`;
+            document.getElementById('pnlTotalExpenses').innerText = `${fmt(totalExpenses)}`;
+            document.getElementById('pnlNetProfit').innerText = `${fmt(netProfit)}`;
+
+            // 3. Balance Sheet Calculation
+            const bsAssetsContainer = document.getElementById('bsAssetsRows');
+            const bsLiabContainer = document.getElementById('bsLiabilitiesRows');
+            const bsEquityContainer = document.getElementById('bsEquityRows');
+
+            bsAssetsContainer.innerHTML = '';
+            bsLiabContainer.innerHTML = '';
+            bsEquityContainer.innerHTML = '';
+
+            let totalAssets = 0;
+            let totalLiabilities = 0;
+            let totalEquity = 0;
+
+            state.accounts.forEach(acc => {
+                if (acc.category === 'Asset') {
+                    totalAssets += acc.balance;
+                    bsAssetsContainer.innerHTML += `
+                        <div class="flex justify-between py-1 border-b border-stone-200/50">
+                            <span>${acc.name}</span>
+                            <span class="font-mono font-medium text-stone-800">${fmt(acc.balance)}</span>
+                        </div>
+                    `;
+                } else if (acc.category === 'Liability') {
+                    totalLiabilities += acc.balance;
+                    bsLiabContainer.innerHTML += `
+                        <div class="flex justify-between py-1 border-b border-stone-200/50">
+                            <span>${acc.name}</span>
+                            <span class="font-mono font-medium text-stone-800">${fmt(acc.balance)}</span>
+                        </div>
+                    `;
+                } else if (acc.category === 'Equity') {
+                    totalEquity += acc.balance;
+                    bsEquityContainer.innerHTML += `
+                        <div class="flex justify-between py-1 border-b border-stone-200/50">
+                            <span>${acc.name}</span>
+                            <span class="font-mono font-medium text-stone-800">${fmt(acc.balance)}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            // Append Net Profit to Equity line (Retained Earnings)
+            bsEquityContainer.innerHTML += `
+                <div class="flex justify-between py-1 border-b border-stone-200/50 text-emerald-700 font-semibold">
+                    <span>Current Fiscal Net Profit / Retained Margin</span>
+                    <span class="font-mono">${fmt(netProfit)}</span>
+                </div>
+            `;
+
+            const finalLiabEquity = totalLiabilities + totalEquity + netProfit;
+
+            document.getElementById('bsTotalAssets').innerText = `${fmt(totalAssets)}`;
+            document.getElementById('bsTotalLiabilitiesEquity').innerText = `${fmt(finalLiabEquity)}`;
+
+            const bsCheck = document.getElementById('bsEquivalenceCheck');
+            if (Math.abs(totalAssets - finalLiabEquity) < 1.0) {
+                bsCheck.className = "mt-4 p-2.5 text-center text-xs font-mono rounded-lg border bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
+                bsCheck.innerText = "✓ BALANCE SHEET BALANCED: TOTAL ASSETS EQUAL TOTAL LIABILITIES + OWNER'S EQUITY";
+            } else {
+                bsCheck.className = "mt-4 p-2.5 text-center text-xs font-mono rounded-lg border bg-amber-500/10 text-amber-700 border-amber-500/20";
+                bsCheck.innerText = `⚠ BALANCE DIFFERENCE: ASSETS (${fmt(totalAssets)}) vs LIABILITIES & EQUITY (${fmt(finalLiabEquity)})`;
+            }
+        }
+
+        // ACCOUNT LEDGER EXPLORER
+        function renderAccountLedger() {
+            const sel = document.getElementById('ledgerAccountSelect');
+            const code = sel.value || state.accounts[0].code;
+            const acc = state.accounts.find(a => a.code === code);
+            if (!acc) return;
+            const debitNature = acc.category === 'Asset' || acc.category === 'Expense';
+            const effect = l => debitNature ? (l.debit - l.credit) : (l.credit - l.debit);
+
+            const lines = [];
+            state.vouchers.forEach(v => { const l = v.lines.find(x => x.accCode === code); if (l) lines.push({ v, l }); });
+            const opening = acc.balance - lines.reduce((s, x) => s + effect(x.l), 0);
+
+            document.getElementById('ledgerAccountTitle').innerText = `[${acc.code}] ${acc.name} (${acc.category})`;
+            document.getElementById('ledgerClosingBalance').innerText = fmt(acc.balance);
+
+            const tbody = document.getElementById('ledgerStatementBody');
+            let run = opening;
+            let rows = `<tr class="bg-stone-50"><td class="p-2.5" colspan="6"><span class="font-semibold text-stone-700">Opening balance (before the entries below)</span></td>
+                <td class="p-2.5 text-right font-mono font-bold text-stone-900">${fmt(opening)}</td></tr>`;
+            lines.forEach(({ v, l }) => {
+                run += effect(l);
+                rows += `<tr class="hover:bg-stone-50">
+                    <td class="p-2.5">${v.date}</td>
+                    <td class="p-2.5 font-mono text-brand-700">${v.id}</td>
+                    <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] bg-stone-100">${v.type}</span></td>
+                    <td class="p-2.5 text-stone-700 max-w-xs truncate">${esc(v.narration)}</td>
+                    <td class="p-2.5 text-right font-mono text-emerald-700">${l.debit > 0 ? fmt(l.debit) : '-'}</td>
+                    <td class="p-2.5 text-right font-mono text-rose-600">${l.credit > 0 ? fmt(l.credit) : '-'}</td>
+                    <td class="p-2.5 text-right font-mono font-bold text-stone-900">${fmt(run)}</td></tr>`;
+            });
+            if (!lines.length) rows += '<tr><td colspan="7" class="p-4 text-center text-stone-500">No entries posted to this account yet. The opening balance is the full balance.</td></tr>';
+            tbody.innerHTML = rows;
+        }
+
+        // AUDIT LOGS RENDER
+        function renderAuditTrail() {
+            const tbody = document.getElementById('auditTrailBody');
+            document.getElementById('auditCount').innerText = state.auditLogs.length;
+            tbody.innerHTML = '';
+
+            state.auditLogs.forEach(log => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-stone-100/40 font-mono text-xs">
+                        <td class="p-3 text-stone-500">${log.timestamp}</td>
+                        <td class="p-3 text-brand-700 font-bold">${log.user}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded bg-stone-100 border border-stone-300 text-stone-700">${log.category}</span></td>
+                        <td class="p-3 text-stone-800">${log.desc}</td>
+                        <td class="p-3 text-right font-bold text-stone-900">${log.impact}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // DYNAMIC DROPDOWNS POPULATOR
+        function populateDropdowns() {
+            // Customer dropdown
+            const custSelect = document.getElementById('invCustomer');
+            if (custSelect) {
+                custSelect.innerHTML = `
+                    <option value="Sharma General Stores">Sharma General Stores</option>
+                    <option value="Kulkarni Wholesale Traders">Kulkarni Wholesale Traders</option>
+                    <option value="Joshi Fashion Hub">Joshi Fashion Hub</option>
+                    <option value="Walk-in Customer (POS)">Walk-in Customer (POS)</option>
+                `;
+            }
+
+            // Vendor dropdown
+            const vendSelect = document.getElementById('purVendor');
+            if (vendSelect) {
+                vendSelect.innerHTML = `
+                    <option value="Deccan Apparel Suppliers">Deccan Apparel Suppliers</option>
+                    <option value="Shivaji Nagar Properties">Shivaji Nagar Properties</option>
+                    <option value="Metro Packaging & Print Co.">Metro Packaging & Print Co.</option>
+                `;
+            }
+
+            // Purchase Categories (Expenses)
+            const purCatSelect = document.getElementById('purCategory');
+            if (purCatSelect) {
+                purCatSelect.innerHTML = state.accounts
+                    .filter(a => a.category === 'Expense')
+                    .map(a => `<option value="${a.code}">${a.name}</option>`)
+                    .join('');
+            }
+
+            // Ledger Explorer Select
+            const ledgerSelect = document.getElementById('ledgerAccountSelect');
+            if (ledgerSelect) {
+                ledgerSelect.innerHTML = state.accounts
+                    .map(a => `<option value="${a.code}">[${a.code}] ${a.name}</option>`)
+                    .join('');
+            }
+        }
+
+        // EXPORTS (CSV / PRINT)
+        function downloadCSV(name, rows) {
+            const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+            a.download = name; document.body.appendChild(a); a.click(); a.remove();
+            toast('Downloaded ' + name);
+        }
+        function exportData(kind) {
+            if (kind === 'invoices') downloadCSV('nayan-retail-sales-invoices.csv',
+                [['Invoice', 'Date', 'Customer', 'Tax type', 'Subtotal', 'Tax', 'Grand total', 'Paid', 'Status']]
+                .concat(state.invoices.map(i => [i.id, i.date, i.customer, i.taxType, i.subtotal, i.taxAmount, i.grandTotal, i.paid || 0, i.status])));
+            if (kind === 'purchases') downloadCSV('nayan-retail-purchase-bills.csv',
+                [['Bill', 'Date', 'Vendor', 'Category', 'Subtotal', 'Tax', 'Grand total']]
+                .concat(state.purchases.map(p => [p.id, p.date, p.vendor, p.category, p.subtotal, p.taxAmount, p.grandTotal])));
+            if (kind === 'vouchers') downloadCSV('nayan-retail-vouchers.csv',
+                [['Voucher', 'Date', 'Type', 'Narration', 'Account', 'Debit', 'Credit']]
+                .concat(state.vouchers.flatMap(v => v.lines.map(l => [v.id, v.date, v.type, v.narration, (state.accounts.find(a => a.code === l.accCode) || {}).name || l.accCode, l.debit, l.credit]))));
+            if (kind === 'trial') downloadCSV('nayan-retail-trial-balance.csv',
+                [['Code', 'Account', 'Category', 'Debit', 'Credit']].concat(state.accounts.map(a => {
+                    const dn = a.category === 'Asset' || a.category === 'Expense';
+                    const dr = (a.balance >= 0) === dn ? Math.abs(a.balance) : 0;
+                    return [a.code, a.name, a.category, dr, dr ? 0 : Math.abs(a.balance)];
+                })));
+        }
+        function addToolbars() {
+            const btn = (label, icon, fn) => `<button onclick="${fn}" class="px-3 py-1.5 bg-white hover:bg-stone-100 border border-stone-300 rounded-lg text-xs font-medium text-stone-700 flex items-center gap-1.5 transition"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i>${label}</button>`;
+            const bar = items => `<div class="no-print flex justify-end gap-2">${items.join('')}</div>`;
+            const put = (id, items) => document.getElementById('tab-' + id).insertAdjacentHTML('afterbegin', bar(items));
+            put('sales', [btn('Download CSV', 'download', "exportData('invoices')")]);
+            put('purchases', [btn('Download CSV', 'download', "exportData('purchases')")]);
+            put('vouchers', [btn('Download CSV', 'download', "exportData('vouchers')")]);
+            put('reports', [btn('Trial balance CSV', 'download', "exportData('trial')"), btn('Print / Save as PDF', 'printer', 'window.print()')]);
+        }
+
+        // GLOBAL SEARCH
+        function setupSearch() {
+            const input = document.getElementById('globalSearch');
+            const holder = input.parentElement;
+            holder.insertAdjacentHTML('beforeend', '<div id="searchResults" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg z-40 max-h-72 overflow-y-auto text-xs"></div>');
+            const box = document.getElementById('searchResults');
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                if (q.length < 2) { box.classList.add('hidden'); return; }
+                const hits = [];
+                state.invoices.forEach(i => { if ((i.id + i.customer).toLowerCase().includes(q)) hits.push(['Invoice', i.id, i.customer, "switchTab('sales')"]); });
+                state.purchases.forEach(p => { if ((p.id + p.vendor).toLowerCase().includes(q)) hits.push(['Bill', p.id, p.vendor, "switchTab('purchases')"]); });
+                state.vouchers.forEach(v => { if ((v.id + v.narration).toLowerCase().includes(q)) hits.push(['Voucher', v.id, v.narration, "switchTab('vouchers')"]); });
+                state.accounts.forEach(a => { if ((a.code + a.name).toLowerCase().includes(q)) hits.push(['Account', a.code, a.name, `inspectAccount('${a.code}')`]); });
+                box.innerHTML = hits.length ? hits.slice(0, 8).map(h => `<button class="w-full text-left px-3 py-2 hover:bg-stone-50 flex gap-2 items-baseline" onclick="${h[3]}; document.getElementById('searchResults').classList.add('hidden')">
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-brand-100 text-brand-800">${h[0]}</span>
+                        <span class="font-mono text-brand-700">${esc(h[1])}</span><span class="text-stone-600 truncate">${esc(h[2])}</span></button>`).join('')
+                    : '<div class="px-3 py-3 text-stone-500">Nothing matches "' + esc(q) + '".</div>';
+                box.classList.remove('hidden');
+            });
+            document.addEventListener('click', e => { if (!holder.contains(e.target)) box.classList.add('hidden'); });
+        }
+
+        // UTILITY FUNCTIONS
+        function openAddAccountModal() {
+            document.getElementById('addAccountForm').reset();
+            document.getElementById('addAccountModal').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>
